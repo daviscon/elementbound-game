@@ -1,0 +1,270 @@
+/* v2 UI: the 2D game's painted cel UI. Small pieces in the corners, painted art from assets/ui/cut,
+   the game font (Avenir Next stack, weight 700), text with an ink outline, no big dark boxes. */
+:root { --ink: #1d1620; --cream: #f3ecdf; --gold: #ffd36a; --red: #e2574c; --dim: rgba(243,236,223,0.75);
+  --font: "Avenir Next", "Futura", "Trebuchet MS", "Segoe UI", sans-serif;
+  --inkline: 0 0 3px var(--ink), 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink), 0 2px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink); }
+html, body { margin: 0; height: 100%; background: #0e0b12; overflow: hidden; font-family: var(--font); font-weight: 700; color: var(--cream); user-select: none; }
+canvas#view { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; outline: none; cursor: crosshair; }
+.hidden { display: none !important; }
+img { -webkit-user-drag: none; }
+
+#hud { position: fixed; inset: 0; pointer-events: none; }
+/* top-left: hearts, the Breath brush stroke, beads */
+#vitals { position: absolute; left: 22px; top: 18px; }
+#hearts { display: flex; gap: 3px; height: 30px; }
+#hearts img { height: 30px; transition: transform .15s; filter: drop-shadow(0 1px 0 rgba(29,22,32,.4)); }
+#hearts img.lost { animation: heartShake .5s ease-out; }
+#hearts img.gain { animation: heartGain .6s ease-out; }
+@keyframes heartShake { 0% { transform: scale(1.35) rotate(-10deg); } 25% { transform: translateX(-4px) rotate(8deg); } 50% { transform: translateX(3px) rotate(-5deg); } 100% { transform: none; } }
+@keyframes heartGain { 0% { transform: scale(1.5); } 100% { transform: none; } }
+#breath { position: relative; width: 210px; height: 37px; margin-top: 4px; margin-left: -4px; }
+#breath .frame { position: absolute; left: 0; top: 0; height: 37px; }
+#breath-clip { position: absolute; left: 0; top: 0; height: 37px; overflow: hidden; width: 100%; transition: width .1s linear; }
+#breath-clip img { height: 37px; }
+#breath.low #breath-clip { animation: breathLow .3s; }
+@keyframes breathLow { 50% { filter: brightness(.6) sepia(1) hue-rotate(-40deg); } }
+#beads { display: flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 17px; text-shadow: var(--inkline); position: relative; }
+#beads img { height: 24px; }
+#bead-pop { position: absolute; left: 62px; top: 0; color: #9be38f; opacity: 0; }
+#bead-pop.show { animation: beadPop 1.4s ease-out; }
+@keyframes beadPop { 0% { opacity: 1; transform: translateY(4px); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+
+/* bottom-right: the abilities Joon has learned, each with its button and a cooldown wipe */
+#abilities { position: absolute; right: 22px; bottom: 20px; display: flex; gap: 10px; align-items: flex-end; }
+.ab { position: relative; width: 58px; text-align: center; transition: transform .2s; }
+.ab .med { position: relative; width: 58px; height: 58px; }
+.ab .med img { width: 58px; height: 58px; display: block; }
+.ab .cd { position: absolute; inset: 5px; border-radius: 50%; background: conic-gradient(rgba(29,22,32,.72) calc(var(--k, 0) * 1turn), transparent 0); }
+.ab .keys { margin-top: -6px; display: flex; justify-content: center; align-items: center; gap: 1px; font-size: 11px; text-shadow: var(--inkline); }
+.ab.used { animation: abUsed .3s ease-out; }
+.ab.nope { animation: abNope .35s; }
+.ab.new { animation: abNew 1.6s ease-out; }
+@keyframes abUsed { 0% { transform: scale(1.18); } 100% { transform: none; } }
+@keyframes abNope { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@keyframes abNew { 0% { transform: scale(2.2); opacity: 0; filter: brightness(2); } 40% { opacity: 1; } 100% { transform: none; filter: none; } }
+
+/* glyphs: painted pad buttons, or cream pills with ink text for the keyboard */
+.g { height: 1.45em; vertical-align: middle; margin: 0 1px; }
+.ab .g { height: 20px; }
+.kb { display: inline-block; min-width: 1.1em; padding: 0 .35em; margin: 0 1px; border-radius: .4em; background: var(--cream); color: var(--ink); border: 2px solid var(--ink); font-size: .8em; line-height: 1.35em; text-shadow: none; vertical-align: middle; }
+
+#reticle { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; }
+#reticle img { width: 46px; height: 46px; filter: drop-shadow(0 0 1px var(--ink)); transition: transform .12s; }
+#reticle.on-target img { transform: scale(0.85); }
+#hitmark { position: absolute; inset: 8px; opacity: 0; background: linear-gradient(45deg, transparent 46%, #fff 46% 54%, transparent 54%), linear-gradient(-45deg, transparent 46%, #fff 46% 54%, transparent 54%);
+  -webkit-mask: radial-gradient(circle, transparent 38%, #000 40%); mask: radial-gradient(circle, transparent 38%, #000 40%); }
+#hitmark.show { animation: hitmark .2s ease-out; }
+@keyframes hitmark { 0% { opacity: 1; transform: scale(1.3); } 100% { opacity: 0; transform: scale(1); } }
+
+/* over enemies: the attack signal, the stun stroke, the R3 prompt */
+#marks { position: absolute; inset: 0; }
+.mk { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; }
+.mk .sig { width: 40px; height: 40px; }
+.mk .sig.pop { animation: sigPop .25s ease-out; }
+@keyframes sigPop { 0% { transform: scale(1.8); } 100% { transform: none; } }
+.mk .stun { position: relative; width: 64px; height: 7px; margin-top: 3px; }
+.mk .stun .bg { position: absolute; inset: 0; border-radius: 4px; background: rgba(29,22,32,.55); }
+.mk .stun .fill { position: absolute; left: 0; top: 0; bottom: 0; overflow: hidden; }
+.mk .stun .fill img { width: 64px; height: 7px; display: block; filter: sepia(1) saturate(3) hue-rotate(5deg) brightness(1.1); }
+.mk .r3 { height: 34px; margin-top: 2px; animation: bob .7s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-4px); } }
+
+#threats { position: absolute; inset: 0; }
+.threat { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.threat i { position: absolute; left: -15px; top: -200px; width: 30px; height: 26px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.threat.gold i { background: var(--gold); filter: drop-shadow(0 0 2px var(--ink)); }
+.threat.red i { background: var(--red); }
+
+/* hints: one line, no box, ink-outlined text; fade after a few seconds */
+#hint { position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); max-width: 78vw; text-align: center; font-size: 19px; text-shadow: var(--inkline); opacity: 0; transition: opacity .5s; white-space: nowrap; }
+#hint.show { opacity: 1; }
+#hint b { color: var(--gold); }
+/* captions for in-world speech */
+#caption { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); max-width: 70vw; text-align: center; font-size: 19px; text-shadow: var(--inkline); opacity: 0; transition: opacity .35s; }
+#caption.show { opacity: 1; }
+#cap-who { color: var(--gold); margin-right: 8px; }
+
+/* the boss: a thin brush stroke top-centre, name in the game font, a notch per phase */
+#boss { position: absolute; left: 50%; top: 16px; width: 420px; margin-left: -210px; text-align: center; }
+#boss-name { font-size: 19px; letter-spacing: 3px; text-shadow: var(--inkline); margin-bottom: 1px; }
+#boss-bar { position: relative; height: 26px; }
+#boss-bar .frame { position: absolute; left: 0; top: 0; width: 100%; height: 26px; }
+#boss-clip, #boss-lag { position: absolute; left: 0; top: 0; height: 26px; overflow: hidden; width: 100%; }
+#boss-clip img { width: 420px; height: 26px; }
+#boss-lag { background: rgba(255,211,138,.6); left: 6%; top: 8px; height: 10px; transition: width .6s ease-in .25s; border-radius: 3px; }
+#boss-bar .notch { position: absolute; top: 4px; bottom: 4px; width: 3px; background: var(--ink); z-index: 3; }
+
+#tag { position: absolute; right: 24px; top: 20px; font-size: 16px; color: var(--gold); text-shadow: var(--inkline); opacity: 0; transition: opacity .4s; }
+#tag.show { opacity: 1; }
+#area { position: absolute; left: 0; right: 0; top: 13%; text-align: center; opacity: 0; transition: opacity 1s; }
+#area.show { opacity: 1; }
+#area-title { font-size: 34px; letter-spacing: 7px; text-shadow: var(--inkline); }
+#area-sub { font-size: 16px; color: var(--gold); letter-spacing: 2px; text-shadow: var(--inkline); }
+#lock { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; }
+#lock img { width: 34px; height: 34px; animation: spin 6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* hurt: a thin ink vignette on the side the hit came from */
+.vig { position: absolute; top: 0; bottom: 0; width: 18vw; opacity: 0; transition: opacity .5s; }
+#vig-l { left: 0; background: linear-gradient(90deg, rgba(29,22,32,.75), transparent); }
+#vig-r { right: 0; background: linear-gradient(270deg, rgba(29,22,32,.75), transparent); }
+#vig-b { left: 0; right: 0; top: auto; height: 14vh; width: auto; background: linear-gradient(0deg, rgba(29,22,32,.6), transparent); }
+.vig.on { opacity: 1; transition: none; }
+
+/* side dialogue: the painted talk frame */
+#talk { position: fixed; left: 50%; bottom: 4%; width: min(900px, 80vw); aspect-ratio: 2688 / 640; transform: translateX(-50%); background: url(assets/ui/cut/talk-frame.webp) center/100% 100% no-repeat; color: #3a2a24; }
+#talk-portrait { position: absolute; left: 3.6%; top: 13%; width: 17%; height: 72%; background: center/cover no-repeat; border-radius: 4px; }
+#talk-body { position: absolute; left: 24%; right: 4%; top: 12%; bottom: 12%; }
+#talk-name { font-size: 20px; color: #8a2f25; margin-bottom: 4px; }
+#talk-text { font-size: 19px; line-height: 1.35; font-weight: 600; }
+#talk-next { position: absolute; right: 0; bottom: 0; animation: bob .9s ease-in-out infinite; }
+
+/* the attunement card */
+#ceremony { position: fixed; left: 0; right: 0; top: 9%; display: flex; justify-content: center; pointer-events: none; }
+#ceremony .card { position: relative; width: 600px; height: 250px; background: url(assets/ui/cut/power-card.webp) center/100% 100% no-repeat; text-align: center; color: #3a2a24; animation: cerIn 6.4s ease-out forwards; }
+#cer-icon { position: absolute; left: 50%; top: -34px; width: 92px; margin-left: -46px; filter: drop-shadow(0 3px 0 rgba(29,22,32,.35)); }
+#cer-kicker { padding-top: 66px; font-size: 14px; letter-spacing: 3px; color: #8a2f25; text-transform: uppercase; }
+#cer-title { font-size: 34px; margin-top: 2px; }
+#cer-how { margin-top: 10px; font-size: 18px; }
+@keyframes cerIn { 0% { opacity: 0; transform: translateY(-10px) scale(.95); } 8% { opacity: 1; transform: none; } 88% { opacity: 1; } 100% { opacity: 0; } }
+
+.screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; }
+#title { background: linear-gradient(rgba(14,11,18,0), rgba(14,11,18,0.45)), url(assets/ui/screen-title-v4-ingame.webp) center/cover;   /* v4: the bald monk, in-engine, until the new key art (ASSET-REQUESTS 6) */ transition: opacity 1.2s; }
+#title.out { opacity: 0; pointer-events: none; }
+#title .logo, #ending .logo { font-size: 84px; letter-spacing: 10px; text-shadow: 0 0 10px var(--ink), 5px 5px 0 var(--ink), -5px 5px 0 var(--ink), 5px -5px 0 var(--ink), -5px -5px 0 var(--ink); }
+#ending .logo { font-size: 52px; letter-spacing: 3px; }
+.sub { margin-top: 6px; font-size: 24px; color: #ffe9a8; text-shadow: var(--inkline); }
+.go { margin-top: 40px; font-size: 22px; animation: pulse 1.6s ease-in-out infinite; text-shadow: var(--inkline); }
+@keyframes pulse { 50% { opacity: .6; } }
+/* the title-screen loading bar: the painted breath gauge fills with the real download progress; Begin waits for it */
+#load-bar { position: relative; width: 254px; height: 67px; margin: 34px auto 0; transition: opacity .5s; }
+#load-bar .frame { position: absolute; left: 0; top: 0; height: 67px; }
+#load-fill { position: absolute; left: 0; top: 0; height: 67px; width: 27%; overflow: hidden; transition: width .25s linear; }
+#load-fill img { height: 67px; }
+#load-pct { position: absolute; left: 30%; right: 8%; top: 0; line-height: 67px; font-size: 18px; text-align: center; text-shadow: var(--inkline); }
+body:not(.loading) #load-bar { opacity: 0; height: 0; margin-top: 0; overflow: hidden; }
+body.loading #title-go { visibility: hidden; height: 0; margin-top: 0; }
+#load-note { margin-top: 14px; font-size: 15px; color: var(--dim); text-shadow: var(--inkline); }
+#pause, #reconnect { background: rgba(14,11,18,0.45); }
+.panel { width: 560px; min-height: 420px; background: url(assets/ui/cut/panel-frame.webp) center/100% 100% no-repeat; color: #3a2a24; padding: 46px 52px 40px; box-sizing: border-box; text-align: left; position: relative; }
+.panel.small { min-height: 200px; text-align: center; }
+.panel h2 { margin: 0 0 14px; font-size: 30px; letter-spacing: 3px; text-align: center; color: #3a2a24; }
+#menu-body { font-size: 20px; }
+.mi { padding: 7px 14px; border-radius: 8px; margin: 2px 0; display: flex; justify-content: space-between; align-items: center; }
+.mi.sel { background: rgba(138,47,37,.16); box-shadow: inset 4px 0 0 #8a2f25; }
+.mi .val { color: #8a2f25; }
+.mi.dim { opacity: .5; }
+.mi .cost { display: flex; align-items: center; gap: 4px; font-size: 16px; }
+.mi .cost img { height: 18px; }
+.mv { display: flex; justify-content: space-between; font-size: 16px; padding: 4px 6px; border-bottom: 1px solid rgba(58,42,36,.15); }
+.mv span:last-child { white-space: nowrap; }
+#menu-foot { position: absolute; left: 0; right: 0; bottom: 26px; text-align: center; font-size: 15px; color: #6a5248; }
+#menu-desc { margin-top: 12px; font-size: 15px; color: #6a5248; min-height: 40px; font-weight: 600; }
+#ending { background: linear-gradient(rgba(14,11,18,0.0), rgba(14,11,18,0.55)); animation: fadeIn 2.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } }
+#fade { position: fixed; inset: 0; background: #0e0b12; opacity: 0; pointer-events: none; transition: opacity .6s; }
+#dbg { position: fixed; right: 8px; bottom: 6px; font: 12px monospace; color: #fff; text-shadow: 1px 1px 0 #000; pointer-events: none; white-space: pre; }
+
+/* v3: the objective line (note 7): top right, small, ink-outlined, fades after a few seconds; D-pad up shows it */
+#goal { position: absolute; right: 2.4vw; top: 3.2vh; max-width: 34vw; text-align: right; font-size: 17px; text-shadow: var(--inkline); opacity: 0; transition: opacity .6s; }
+#goal.show { opacity: 1; }
+#goal::before { content: ''; display: block; height: 3px; margin: 0 0 6px auto; width: 60%; background: linear-gradient(90deg, transparent, var(--gold)); border-radius: 2px; }
+#goal img.g { height: 22px; vertical-align: -5px; }
+/* v4 note 27: a painted mouse glyph, the pressed button filled in */
+.kb.mouse { position: relative; width: .95em; min-width: 0; height: 1.35em; padding: 0; border-radius: .48em .48em .55em .55em; background: var(--cream); overflow: visible; }
+.kb.mouse b { position: absolute; top: 0; height: .58em; width: 50%; background: var(--ink); }
+.kb.mouse.mL b { left: 0; border-radius: .4em 0 0 0; }
+.kb.mouse.mR b { right: 0; border-radius: 0 .4em 0 0; }
+.kb.mouse.mM b { left: 38%; width: 24%; height: .5em; top: .1em; border-radius: .2em; }
+.kb.mouse i { position: absolute; right: 105%; top: 0; font: italic 700 .7em/1.9em inherit; color: inherit; white-space: nowrap; font-style: italic; }
+.kbw { font-size: .72em; font-style: italic; margin-right: .15em; vertical-align: middle; }
+.ctl { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: 2px 14px; font-size: .86em; }
+.ctl .h { opacity: .7; font-weight: 700; border-bottom: 1px solid currentColor; }
+
+/* ---------------------------------------------------------------- v7 note 43: touch controls (js/touch.js)
+   painted stone discs like the pad glyphs, semi-transparent, pressed = smaller and brighter; sized from the
+   viewport height (--u = 1px at 390 px tall) and kept inside the safe areas */
+html, body { touch-action: none; overscroll-behavior: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+:root { --u: clamp(0.8px, calc(100vh / 390), 1.5px); --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px); }
+#touch { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+#touch.off { display: none; }
+#touch svg, .tg svg, #rotate svg { fill: none; stroke: var(--cream); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+#touch svg .f, .tg svg .f { fill: var(--cream); stroke: none; }
+#touch svg .t, .tg svg .t { stroke-width: 1.6; opacity: .8; }
+.tb { position: absolute; width: calc(64 * var(--u)); height: calc(64 * var(--u)); left: calc(var(--x) * var(--u)); top: calc(var(--y) * var(--u)); transform: translate(-50%, -50%); box-sizing: border-box; border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #a39890 0%, #6f6560 55%, #463d3b 100%); border: calc(3 * var(--u)) solid var(--ink);
+  box-shadow: inset 0 calc(3 * var(--u)) 0 rgba(255,255,255,.16), inset 0 calc(-4 * var(--u)) 0 rgba(0,0,0,.28), 0 calc(2 * var(--u)) 0 rgba(29,22,32,.45);
+  display: flex; align-items: center; justify-content: center; pointer-events: auto; opacity: .55; transition: transform .06s, opacity .1s, filter .1s; }
+.tb svg { width: 56%; height: 56%; filter: drop-shadow(0 1px 0 var(--ink)); pointer-events: none; }
+.tb.down { transform: translate(-50%, -50%) scale(.92); opacity: .92; filter: brightness(1.35); }
+.tb.big { width: calc(96 * var(--u)); height: calc(96 * var(--u)); background: radial-gradient(circle at 38% 30%, #d0705a 0%, #8a2f25 60%, #561b15 100%); border-width: calc(3.5 * var(--u)); }
+.tb.sm { position: relative; left: auto; top: auto; transform: none; width: calc(44 * var(--u)); height: calc(44 * var(--u)); border-width: calc(2.5 * var(--u)); }
+.tb.sm.down { transform: scale(.92); }
+.tb.air { width: calc(50 * var(--u)); height: calc(50 * var(--u)); border-width: calc(2.5 * var(--u)); }
+.tb img { position: absolute; inset: -6%; width: 112%; height: 112%; pointer-events: none; }
+.tb[data-act="gust"], .tb[data-act="whirl"] { background: none; border: 0; box-shadow: none; }
+.tb .cd { position: absolute; inset: 9%; border-radius: 50%; background: conic-gradient(rgba(29,22,32,.72) calc(var(--k, 0) * 1turn), transparent 0); pointer-events: none; }
+.tb.gone { display: none; }
+.tb.hot { animation: tbHot 1s ease-in-out infinite; }
+@keyframes tbHot { 50% { opacity: .95; filter: brightness(1.3) drop-shadow(0 0 6px var(--gold)); } }
+/* the cluster, positioned around the Attack button's centre (x right, y down, in --u) */
+#t-pad { position: absolute; right: calc(var(--sr) + 74 * var(--u)); bottom: calc(var(--sb) + 64 * var(--u)); width: 0; height: 0; }
+#t-pad [data-act="light"] { --x: 0; --y: 0; }
+#t-pad [data-act="jump"] { --x: -112; --y: 10; }
+#t-pad [data-act="heavy"] { --x: -97; --y: -56; }
+#t-pad [data-act="dodge"] { --x: -47; --y: -101; }
+#t-pad [data-act="guard"] { --x: 19; --y: -110; }
+#t-pad [data-act="aim"] { --x: -176; --y: -52; }
+#t-pad [data-act="interact"] { --x: 22; --y: -176; }
+#t-pad [data-act="lock"] { --x: -38; --y: -176; }
+#t-pad [data-act="gust"] { --x: -98; --y: -176; }
+#t-pad [data-act="whirl"] { --x: -158; --y: -176; }
+#t-top { position: absolute; right: calc(var(--sr) + 12 * var(--u)); top: calc(var(--st) + 10 * var(--u)); display: flex; gap: calc(10 * var(--u)); }
+/* the floating stick: a faint resting ring bottom-left, it jumps to wherever the thumb lands */
+#t-stick { position: absolute; left: calc(var(--sl) + 96 * var(--u)); top: calc(100% - var(--sb) - 92 * var(--u)); width: 0; height: 0; opacity: .3; transition: opacity .15s; }
+#t-stick.live { opacity: .85; transition: none; }
+#t-base { position: absolute; width: calc(112 * var(--u)); height: calc(112 * var(--u)); left: calc(-56 * var(--u)); top: calc(-56 * var(--u)); border-radius: 50%; box-sizing: border-box;
+  border: calc(3 * var(--u)) solid rgba(29,22,32,.75); background: radial-gradient(circle, rgba(243,236,223,.08) 40%, rgba(243,236,223,.22) 100%); box-shadow: inset 0 0 0 calc(2 * var(--u)) rgba(243,236,223,.35); }
+#t-knob { position: absolute; width: calc(52 * var(--u)); height: calc(52 * var(--u)); left: calc(-26 * var(--u)); top: calc(-26 * var(--u)); border-radius: 50%; box-sizing: border-box;
+  background: radial-gradient(circle at 38% 30%, #a39890 0%, #6f6560 55%, #463d3b 100%); border: calc(3 * var(--u)) solid var(--ink); }
+/* touch glyphs in prompts and on the Controls page */
+.tg { display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; margin: 0 1px; border-radius: 50%; vertical-align: middle; box-sizing: border-box;
+  background: radial-gradient(circle at 38% 30%, #a39890 0%, #6f6560 55%, #463d3b 100%); border: 2px solid var(--ink); }
+.tg svg { width: 64%; height: 64%; }
+.tg-light { background: radial-gradient(circle at 38% 30%, #d0705a 0%, #8a2f25 60%, #561b15 100%); }
+.tgw { font-size: .72em; font-style: italic; margin-left: .2em; vertical-align: middle; }
+/* layout while touch is in use: the medallions give way to the buttons, the goal line clears the pause button */
+body.touch #abilities { display: none; }
+body.touch #goal, body.touch #tag { top: calc(var(--st) + 3.2vh + 50 * var(--u)); right: calc(var(--sr) + 2.4vw); }
+body.touch #vitals { left: calc(var(--sl) + 22px); top: calc(var(--st) + 14px); }
+body.touch #caption { bottom: calc(var(--sb) + 8px); max-width: 50vw; font-size: 17px; }
+body.touch #hint { bottom: 30%; }
+body.touch canvas#view { cursor: default; }
+.ctl { grid-template-columns: 1.5fr .9fr 1.2fr .7fr; }
+.tback { display: inline-block; padding: 8px 26px; border-radius: 22px; background: rgba(138,47,37,.88); color: var(--cream); font-size: 17px; border: 2px solid var(--ink); }
+@media (max-height: 600px) {
+  body.touch .panel { min-height: 0; max-height: 94vh; padding: 28px 40px 58px; display: flex; flex-direction: column; }
+  body.touch .panel h2 { font-size: 24px; margin-bottom: 6px; }
+  body.touch #menu-body { overflow-y: auto; min-height: 0; flex: 1; }
+  body.touch .mi { padding: 7px 14px; }
+  body.touch #menu-foot { bottom: 16px; }
+}
+/* portrait: the painted card asks for landscape (the game pauses under it) */
+#rotate { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: linear-gradient(rgba(14,11,18,.55), rgba(14,11,18,.75)), url(assets/ui/screen-title-v4-ingame.webp) center/cover #0e0b12; }
+#rotate .card { width: min(78vw, 340px); padding: 40px 30px 36px; background: url(assets/ui/cut/panel-frame.webp) center/100% 100% no-repeat; color: #3a2a24; text-align: center; }
+#rotate svg { width: 84px; height: 84px; stroke: #3a2a24; stroke-width: 2.6; animation: rotPhone 2.4s ease-in-out infinite; }
+#rotate svg .t { stroke: #8a2f25; }
+@keyframes rotPhone { 0%, 25% { transform: rotate(0); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+#rotate .t1 { font-size: 24px; margin-top: 8px; letter-spacing: 1px; }
+#rotate .t2 { font-size: 15px; color: #6a5248; margin-top: 4px; font-weight: 600; }
+/* v7 note 40: the lesson tick */
+#goal .tickmark { display: inline-block; color: var(--gold); font-weight: 800; font-size: 1.35em; margin-right: 8px; animation: tickpop .45s cubic-bezier(.2,1.6,.4,1) both; text-shadow: var(--inkline); }
+#goal.done #goal-text { color: #fff7dc; }
+@keyframes tickpop { 0% { transform: scale(0) rotate(-25deg); } 100% { transform: scale(1) rotate(0); } }
+#goal.lesson { font-size: 22px; max-width: 44vw; }
+#goal.lesson img.g { height: 28px; vertical-align: -7px; }
+#goal.lesson .kb { font-size: 17px; }
+/* v7: on touch the goal line sits top centre, clear of the button cluster on the right */
+body.touch #goal { right: auto; left: 50%; transform: translateX(-50%); top: calc(var(--st) + 1.2vh); text-align: center; max-width: 52vw; font-size: 15px; }
+body.touch #goal::before { margin: 0 auto 4px; width: 40%; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+body.touch #goal.lesson { font-size: 17px; max-width: 52vw; }
+body.touch #goal.lesson img.g, body.touch #goal img.g { height: 22px; vertical-align: -6px; }

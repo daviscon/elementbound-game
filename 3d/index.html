@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Elementbound 3D: Kite Hill</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="view" tabindex="0"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="vitals">
+    <div id="hearts"></div>
+    <div id="breath"><img class="frame" src="assets/ui/cut/breath-frame.png" alt=""><div id="breath-clip"><img src="assets/ui/cut/breath-fill.png" alt=""></div></div>
+    <div id="beads"><img src="assets/ui/cut/bead.png" alt=""><span id="bead-n">0</span><span id="bead-pop"></span></div>
+  </div>
+  <div id="reticle" class="hidden"><img id="ret-img" src="assets/ui/cut/ret-open.png" alt=""><div id="hitmark"></div></div>
+  <div id="marks"></div>
+  <div id="threats"></div>
+  <div id="abilities"></div>
+  <div id="hint"></div>
+  <div id="caption"><span id="cap-who"></span><span id="cap-text"></span></div>
+  <div id="boss" class="hidden">
+    <div id="boss-name">The Captain</div>
+    <div id="boss-bar"><img class="frame" src="assets/ui/cut/boss-frame.png" alt=""><div id="boss-lag"></div><div id="boss-clip"><img src="assets/ui/cut/boss-fill.png" alt=""></div><i class="notch" style="left:40%"></i><i class="notch" style="left:15%"></i></div>
+  </div>
+  <div id="tag"></div>
+  <div id="goal"><span id="goal-text"></span></div>
+  <div id="area"><div id="area-title"></div><div id="area-sub"></div></div>
+  <div id="lock" class="hidden"><img src="assets/ui/cut/ret-lock.png" alt=""></div>
+  <div id="vig-l" class="vig"></div><div id="vig-r" class="vig"></div><div id="vig-b" class="vig"></div>
+</div>
+
+<div id="talk" class="hidden">
+  <div id="talk-portrait"></div>
+  <div id="talk-body"><div id="talk-name"></div><div id="talk-text"></div><div id="talk-next"></div></div>
+</div>
+
+<div id="ceremony" class="hidden">
+  <div class="card"><img id="cer-icon" src="" alt=""><div id="cer-kicker">A new technique</div><div id="cer-title"></div><div id="cer-how"></div></div>
+</div>
+
+<div id="title" class="screen">
+  <div class="title-inner">
+    <div class="logo">ELEMENTBOUND</div>
+    <div class="sub">Kite Hill: the monastery under siege</div>
+    <div id="load-bar" aria-label="Loading"><img class="frame" src="assets/ui/cut/breath-frame.png" alt=""><div id="load-fill"><img src="assets/ui/cut/breath-fill.png" alt=""></div><div id="load-pct"></div></div>
+    <div class="go" id="title-go"></div>
+    <div id="load-note"></div>
+  </div>
+</div>
+
+<div id="pause" class="screen hidden">
+  <div class="panel">
+    <h2 id="menu-title">Paused</h2>
+    <div id="menu-body"></div>
+    <div id="menu-foot"></div>
+  </div>
+</div>
+
+<div id="reconnect" class="screen hidden"><div class="panel small"><h2>Reconnect controller</h2><div id="reconnect-sub"></div></div></div>
+
+<div id="ending" class="screen hidden">
+  <div class="end-inner">
+    <div class="logo">The bell of Kite Hill rings again</div>
+    <div class="sub" id="end-stats"></div>
+    <div class="go" id="end-go"></div>
+  </div>
+</div>
+
+<div id="fade"></div>
+<div id="dbg"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

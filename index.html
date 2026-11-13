@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elementbound</title>
+<meta name="description" content="An original elemental-bending action game, free to play in your browser: a 2D Metroidvania and a 3D action chapter.">
+<style>
+  :root { --ink:#1d1620; --cream:#f6ecd2; --saffron:#e8902c; --maroon:#7a2230; --sky:#6fb6d8; }
+  * { box-sizing:border-box; margin:0; }
+  body { min-height:100vh; background:var(--ink) url("2d/assets/ui/screen-title.webp") center/cover no-repeat; color:var(--cream);
+         font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif; display:flex; align-items:flex-end; justify-content:center; }
+  .panel { width:min(720px, calc(100% - 32px)); margin:0 16px 6vh; padding:28px 28px 22px; background:rgba(29,22,32,.82);
+           border:3px solid var(--ink); border-radius:18px; box-shadow:0 0 0 2px var(--saffron) inset; text-align:center; }
+  h1 { font-size:clamp(34px, 7vw, 60px); letter-spacing:.06em; text-shadow:3px 3px 0 var(--ink); }
+  p.tag { margin:6px 0 20px; opacity:.9; }
+  .play { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  a.btn { display:block; padding:16px 12px; border-radius:14px; border:3px solid var(--ink); color:var(--ink); text-decoration:none; font-weight:800; font-size:20px; }
+  a.btn small { display:block; font-weight:600; font-size:13px; opacity:.85; margin-top:4px; }
+  a.two { background:var(--saffron); } a.three { background:var(--sky); }
+  a.btn:hover, a.btn:focus-visible { transform:translateY(-2px); outline:3px solid var(--cream); }
+  .controls { margin-top:18px; font-size:13px; line-height:1.6; opacity:.85; }
+  @media (max-width:520px) { .play { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+  <main class="panel">
+    <h1>ELEMENTBOUND</h1>
+    <p class="tag">Four elements. One breath. Free to play in your browser.</p>
+    <div class="play">
+      <a class="btn two" href="2d/">Play 2D<small>The Metroidvania</small></a>
+      <a class="btn three" href="3d/">Play 3D<small>Chapter 1: Kite Hill</small></a>
+    </div>
+    <p class="controls">Controller, keyboard and mouse, or touch (turn your phone sideways).<br>Made with Claude and Higgsfield.</p>
+  </main>
+</body>
+</html>
