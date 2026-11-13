@@ -5,7 +5,7 @@
 //
 // Pad layout (v3, Connor's note 8): ✕ jump · ○ dodge / roll (the Wind-Step once learned) · △ interact
 // R1 light · R2 heavy (aimed gust while L2 is held) · L1 guard/parry · L2 aim
-// L1+□ palm gust · L1+△ whirlwind lift (in the air: a jump extender) · R3 lock-on / takedown · Options pause.
+// L1+□ palm gust · ✕ in the air: double jump (shrine 3) · R3 lock-on / takedown · Options pause.
 const PAD = { cross: 0, circle: 1, square: 2, triangle: 3, L1: 4, R1: 5, L2: 6, R2: 7, share: 8, options: 9, L3: 10, R3: 11, up: 12, down: 13, left: 14, right: 15 };
 const keys = new Set(), mouse = new Set();
 let mdx = 0, mdy = 0;
@@ -78,7 +78,6 @@ export function pollInput(dt) {
   state.jump = K('Space') || B(PAD.cross);
   state.dodge = K('ShiftLeft') || K('ShiftRight') || K('KeyC') || B(PAD.circle);
   state.gust = (L1 && B(PAD.square)) || K('Digit1') || K('KeyZ') || K('KeyG');
-  state.whirl = (L1 && B(PAD.triangle)) || K('Digit2') || K('KeyX') || K('KeyV');
   state.lock = K('Tab') || Mb(1) || B(PAD.R3);
   state.interact = K('KeyE') || (!L1 && B(PAD.triangle));
   state.pause = K('Escape') || K('KeyP') || B(PAD.options);
@@ -88,7 +87,7 @@ export function pollInput(dt) {
   state.fireflip = K('KeyR') || (B(PAD.L2) && B(PAD.square));   // the parked fire backflip (?fire=1)
   state.back = K('Escape') || K('Backspace') || B(PAD.circle);
   // v7 note 43: the on-screen touch buttons, ORed into the same actions (identical press / hold / release)
-  for (const a of ['light', 'heavy', 'guard', 'jump', 'dodge', 'gust', 'whirl', 'lock', 'interact', 'pause', 'guide', 'confirm', 'back']) if (Input.touchHeld.has(a) || Input.touchPulse.has(a)) state[a] = true;
+  for (const a of ['light', 'heavy', 'guard', 'jump', 'dodge', 'gust', 'lock', 'interact', 'pause', 'guide', 'confirm', 'back']) if (Input.touchHeld.has(a) || Input.touchPulse.has(a)) state[a] = true;
   // v7: while the touch Aim is held, Heavy or Attack fires the aimed gust (the pad's L2 + R2)
   if (aimHeld && Input.touchHeld.has('aim') && (state.light || state.heavy) && ['light', 'heavy'].some((a) => Input.touchHeld.has(a) || Input.touchPulse.has(a))) state.heavy = true;
   for (const [a, n] of Input.touchPulse) if (n <= 1) Input.touchPulse.delete(a); else Input.touchPulse.set(a, n - 1);

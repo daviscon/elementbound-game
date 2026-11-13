@@ -1,4 +1,4 @@
-// Bending, v2: the air moves Joon earns (palm gust, whirlwind lift, aimed gust shot, wind blade, the
+// Bending, v2: the air moves Joon earns (palm gust, aimed gust shot, wind blade, the
 // takedown gust), the projectile system shared with enemy fire, and the slinger's lobbed fire pots.
 // Effects are the hand-drawn flipbooks and white curling ribbons; no particle balls, no translucent circles.
 // The v1 fire/water/earth bends stay below behind player.unlocked flags (fire: ?fire=1); they are not in
@@ -14,8 +14,6 @@ import { FX, emit, ribbon, ring, chunks, flip, flipQuad, inkRing, shake, hitstop
 import { toon, addOutline } from './toon.js';
 import { Cam, cameraForward } from './camera.js';
 import { rumble } from './input.js';
-import { FXMesh, loadFXMesh } from './assets.js';
-loadFXMesh('whirlwind');
 
 const ray = new THREE.Raycaster();
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _d = new THREE.Vector3();
@@ -338,34 +336,6 @@ export const Bend = {
     }
     for (const t of G.dummies || []) { _b.copy(t.pos).sub(p.pos).setY(0); if (_b.length() < 5 && _b.normalize().dot(flat) > 0.6) t.onHit('gust'); }
     for (const pr of G.projectiles) if (pr.owner === 'enemy' && pr.pos.distanceTo(from) < 6) { reflect(pr, flat); }
-  },
-  // whirlwind lift (L1 + △): the staff spins, a whirlwind lifts Joon and throws everyone near him into the air
-  whirlwind(p) {
-    Audio.play('whirlwind', { at: p.pos });
-    // v3: a jump extender. From the ground a small hop of wind; in the air it lifts the jump ~3 m higher
-    const air = !p.onGround;
-    p.vel.y = air ? Math.min(11, Math.max(p.vel.y, 0) + 10.2) : 6.6; p.onGround = false; p.jumping = true; p.jumpCut = true;
-    if (air) { G.stats.airLifts = (G.stats.airLifts || 0) + 1; }
-    // the Meshy whirlwind (it reads from every camera angle); the flipbook if it has not loaded
-    let w, mesh = null;
-    if (FXMesh.whirlwind) {
-      mesh = FXMesh.whirlwind.clone(true); const b = new THREE.Box3().setFromObject(mesh); const k = 2.9 / (b.max.y - b.min.y); mesh.scale.setScalar(k);
-      const holder = new THREE.Group(); holder.add(mesh); mesh.position.y = -b.min.y * k; scene.add(holder);
-      let t = 0, l0 = performance.now(); w = { dead: false };
-      const spin = () => { if (w.dead) { scene.remove(holder); return; } const n = performance.now(); const sdt = Math.min(0.05, (n - l0) / 1000); l0 = n; t += sdt; holder.position.copy(p.pos).setY(p.pos.y - 0.3); mesh.rotation.y += 21 * sdt; const g = Math.min(1, t * 6), out = t > 0.75 ? Math.max(0, 1 - (t - 0.75) * 3.5) : 1; holder.scale.set(g * out * 1.1, Math.max(0.05, g) * (0.9 + 0.1 * Math.sin(t * 20)), g * out * 1.1); requestAnimationFrame(spin); };
-      spin();
-    } else w = flip('fx3d-whirlwind', p.pos, { size: 2.8, dur: 1.05, loop: true, follow: p.pos, followOff: new THREE.Vector3(0, 1.1, 0), rot: 0, fadeOut: 0.3 });
-    FX.dust(p.pos, 3, 1.2);
-    for (const e of G.enemies) {
-      if (e.dead || e.takenDown) continue;
-      _b.subVectors(e.pos, p.pos); const d = Math.hypot(_b.x, _b.z); if (d > 5 || Math.abs(_b.y) > 3) continue;
-      _b.setY(0).normalize();
-      if (e.guardBreak) e.guardBreak();
-      hitEnemy(e, { dmg: 6, knock: _b.clone().multiplyScalar(e.boss ? 1 : 5 - d * 0.5), up: e.boss ? 0 : 8.5, el: 'air', heavy: true, stun: 12, from: p.pos }); e.gustT = 1;
-    }
-    for (const pr of G.projectiles) if (pr.owner === 'enemy' && pr.pos.distanceTo(p.pos) < 5) reflect(pr, pr.vel.clone().negate().setY(0).normalize());
-    for (const t of G.dummies || []) if (t.pos.distanceTo(p.pos) < 5) t.onHit('whirl');
-    return { kind: 'whirl', t: 0, dur: 1.05, move: 0.8, lowGrav: true, turn: 8, events: [{ u: 0.05, fn: (pl) => pl.staff.trailOn({ width: 0.1 }) }, { u: 0.7, fn: (pl) => pl.staff.trailOff() }], onEnd: () => { w.dead = true; } };
   },
   // a short blade of wind off a heavy staff strike (skill: the air-infused staff)
   windBlade(p) {

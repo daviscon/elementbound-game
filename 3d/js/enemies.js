@@ -14,7 +14,7 @@ import { Staff } from './staff.js';
 import { World } from './world.js';
 import { Audio } from './audio.js';
 import { swingArc, impact } from './fx3d.js';
-import { flameTongue, fireArc, fireball, burnPatch, fireRing, smokePuff, embers, heldFlame } from './fxfire.js';
+import { flameTongue, fireArc, fireball, burnPatch, fireRing, smokePuff, embers, heldFlame, firePillar, fireTell } from './fxfire.js';
 import { FX, flip, flipQuad, inkRing, chunks, shake, slowmo, hitstop, rnd } from './fx.js';
 import { enemyBolt, firePot, spawnProjectile } from './bending.js';
 import { rumble } from './input.js';
@@ -387,7 +387,7 @@ export class Soldier extends Enemy {
           this.hitDone = true; this.attackHit(1.9, 1, 'gold');
           // v5 (note 33): a firebender's punch throws a short tight jet along the arm
           const fw = _s.set(Math.sin(this.yaw), -0.03, Math.cos(this.yaw)), fist = c.socket('handR', new THREE.Vector3());
-          flameTongue(fist.addScaledVector(fw, 0.2), fw.clone(), { len: 1.3, width: 0.26, life: 0.3, licks: 3 }); Audio.play('fireWhoosh', { at: this.pos, vol: 0.55, rate: 1.15 });
+          flameTongue(fist.addScaledVector(fw, 0.2), fw.clone(), { len: 1.3, width: 0.26, life: 0.3, licks: 3 });   // v8: flameTongue plays the soft whoosh
         }
         if (this.t > 0.6) {
           this.hitDone = false;
@@ -423,7 +423,7 @@ export class Soldier extends Enemy {
           const fw = _s.set(Math.sin(this.yaw), -0.04, Math.cos(this.yaw));
           const fist = c.socket('handR', new THREE.Vector3()); fist.y = Math.max(fist.y, this.pos.y + 1.0);
           flameTongue(fist.addScaledVector(fw, 0.25), fw.clone(), { len: 2.6, width: 0.42, life: 0.45 });   // v5: leaves the fist along the punch
-          Audio.play('fireJab', { at: this.pos, vol: 0.7 }); Audio.play('fireWhoosh', { at: this.pos, vol: 0.8 });
+          Audio.play('fireJab', { at: this.pos, vol: 0.6 });
         }
         return;
       }
@@ -435,7 +435,8 @@ export class Soldier extends Enemy {
       // shield-bearer: a red fire-shield bash (dodge it) that leaves a burning patch. Tell: the shield catches fire for 0.7 s
       case 'bashWind': {
         this.faceTo(yawTo, dt, 5);
-        if (this.t > 0.7) { this.setState('bash'); this.signal(null); if (c.hasClip('shieldPush')) c.play('shieldPush', { seg: [0.7, 1.6], dur: 0.75, speed: 0.9 / 0.75, restart: true, fade: 0.05 }); else c.play('punch1', { restart: true, fade: 0.05, dur: 0.6 }); /* v5: a real shield push (arm out ~0.87 s = t 0.14) */ Audio.play('swingHeavy', { at: this.pos }); this.hitDone = false; this.patched = false; }
+        if (this.t > 0.6 && !this.told) { this.told = true; const at = this.pos.clone().add(_s.set(Math.sin(this.yaw) * 3.3, 0, Math.cos(this.yaw) * 3.3)); const gy = World.ground(at.x, at.z, this.pos.y + 1); at.y = gy > -Infinity ? gy : this.pos.y; fireTell(at, { radius: 1.5, dur: 0.4 }); }   // v8 note 44: the 0.4 s ground tell
+        if (this.t > 0.7) { this.told = false; this.setState('bash'); this.signal(null); if (c.hasClip('shieldPush')) c.play('shieldPush', { seg: [0.7, 1.6], dur: 0.75, speed: 0.9 / 0.75, restart: true, fade: 0.05 }); else c.play('punch1', { restart: true, fade: 0.05, dur: 0.6 }); /* v5: a real shield push (arm out ~0.87 s = t 0.14) */ Audio.play('swingHeavy', { at: this.pos }); this.hitDone = false; this.patched = false; }
         return;
       }
       case 'bash': {
@@ -460,7 +461,7 @@ export class Soldier extends Enemy {
           fireArc(this.pos.clone().setY(this.pos.y + 1.0), this.yaw, { radius: 1.9, arc: 1.9, life: 0.45, width: 0.2, tongues: 3 });
           const fw = _s.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
           flameTongue(this.pos.clone().setY(this.pos.y + 1.1).addScaledVector(fw, 0.4), fw.clone(), { len: 2.2, width: 0.5, life: 0.4 });
-          Audio.play('fireFlick', { at: this.pos, vol: 0.85 }); Audio.play('fireWhoosh', { at: this.pos, vol: 0.6, rate: 1.1 });
+          Audio.play('fireFlick', { at: this.pos, vol: 0.75 });
         }
         return;
       }
@@ -553,6 +554,7 @@ function inkedPot(from, target, attacker) {
   const T = 1.15;
   const v = new THREE.Vector3((land.x - from.x) / T, 0, (land.z - from.z) / T); v.y = (land.y - from.y + 0.5 * 22 * T * T) / T;
   const mark = inkRing(land, { r1: 1.7, hold: true, dur: T + 0.1, color: 0xe2574c, pulse: true });
+  fireTell(land, { radius: 1.7, dur: 0.4, delay: T - 0.4 });   // v8 note 44: embers and heat gather where it lands
   Audio.play('windupFire', { at: from, vol: 0.6 });
   const pr = spawnProjectile({ pos: from, vel: v, grav: 22, owner: 'enemy', r: 0.25, life: T + 1, attacker,
     onDone: () => { mark.dead = true; ball.kill(); },
@@ -642,7 +644,7 @@ export class Captain extends Enemy {
     Audio.play(n === 3 ? 'captainRoarP3' : 'captainRoarP2', { vol: 1 });   // v6: a roar take per phase (ElevenLabs, earshot)
     // v5 (note 36): the phase beat: a roar, a fire shock ring, a slow-motion beat and (v6) an authored camera move
     Audio.play('phase', { vol: 0.8, delay: 0.15 });
-    inkRing(this.pos.clone(), { r0: 0.6, r1: n === 3 ? 7 : 5.5, dur: 0.55, color: 0xffb070 }); fireRing(this.pos.clone(), { radius: n === 3 ? 4.2 : 3.2 });
+    inkRing(this.pos.clone(), { r0: 0.6, r1: n === 3 ? 7 : 5.5, dur: 0.55, color: 0xffb070 }); fireTell(this.pos.clone(), { radius: n === 3 ? 4.2 : 3.2, dur: 0.4 }); fireRing(this.pos.clone(), { radius: n === 3 ? 4.2 : 3.2, delay: 0.4 });
     shake(0.45); rumble(0.9, 0.9, 300); slowmo(0.35, 0.6); impact('gold', 2);
     if (Cam.beat && !G.noBeatCam) Cam.beat(this, 1.2); else if (Cam.kick) Cam.kick(new THREE.Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)), 0.25);
     if (n === 2) { Audio.play('quake', { vol: 0.8, delay: 0.5 }); G.onCaptainPhase2 && G.onCaptainPhase2(this); }
@@ -653,6 +655,7 @@ export class Captain extends Enemy {
     this.chain = null; this.clearMarks(); this.weapon.trailOff(); this.signal('red'); this.setState('flare');
     this.char.play('roar', { restart: true, fade: 0.06, dur: 0.7 });
     Audio.play('windupFire', { at: this.pos, rate: 1.3, vol: 0.8 });
+    fireTell(this.pos.clone(), { radius: 3.2, dur: 0.38 });   // v8 note 44: the ring erupts at t 0.38
     for (const h of ['handR', 'handL']) heldFlame((out) => this.state === 'flare' && !this.dead ? this.char.socket(h, out) : false, { life: 0.35, size: 0.6 });
   }
   remove() { this.clearMarks(); this.pillars = []; super.remove(); }
@@ -742,7 +745,7 @@ export class Captain extends Enemy {
       const q = this.pillars[i]; q.t -= dt; if (q.t > 0) continue;
       this.pillars.splice(i, 1);
       if (q.mark) q.mark.dead = true;
-      flameTongue(q.p, _UP, { len: 2.6, width: 0.55, life: 0.55 }); if (q.i % 2 === 0) fireRing(q.p, { radius: 1.2 }); if (q.last) smokePuff(q.p.clone().setY(q.p.y + 1.6), { size: 0.5 });
+      firePillar(q.p, { height: 2.7, life: 0.65, sound: q.i % 2 === 0 }); if (q.i % 2 === 0) fireRing(q.p, { radius: 0.9, life: 0.55 });   // v8: the generated pillar column + a cel-fire core
       if (q.i % 2 === 0) Audio.play('fireImpact', { at: q.p, vol: 0.55 });
       const P = G.player; if (P && !this.dead && Math.hypot(P.pos.x - q.p.x, P.pos.z - q.p.z) < 1.05 && P.pos.y - q.p.y < 2) hurtPlayer(this.atk ? this.atk.dmg || 2 : 2, q.p.clone(), { sig: 'red', attacker: this, knock: 7, up: 6 });
     }
@@ -798,6 +801,7 @@ export class Captain extends Enemy {
           if (this.atkName === 'slam') { // a leap onto the marked spot (clamped inside the arena)
             const to = arenaClamp(this.slamMark ? this.slamMark.m.position.clone() : P.pos.clone(), 11);
             this.leapFrom = this.pos.clone(); this.leapTo = to; this.vel.y = 10; Audio.play('captainLeap', { at: this.pos });
+            fireTell(to, { radius: 3.0, dur: 0.4, delay: 0.25 });   // v8 note 44
           }
           if (A.kind === 'dash') { this.dashT = 0; this.dashHit = false; this.trailT = 0; Audio.play('fireJab', { at: this.pos, vol: 0.8 }); }
         }
@@ -828,7 +832,7 @@ export class Captain extends Enemy {
           if (this.atkName === 'slam') this.slamLand();
           else if (A.kind === 'pillar') {
             shake(0.35); rumble(0.6, 0.6, 160); Audio.play('flameRing', { at: this.pos, vol: 0.7 }); FX.landDust(this.pos, 1.6);
-            this.line.forEach((p, i) => this.pillars.push({ p, i, t: 0.05 + i * 0.075, mark: this.marks[i], last: i === this.line.length - 1 }));
+            this.line.forEach((p, i) => { this.pillars.push({ p, i, t: 0.4 + i * 0.075, mark: this.marks[i], last: i === this.line.length - 1 }); fireTell(p, { radius: 0.9, dur: 0.4 + i * 0.075, sound: i === 0 }); });   // v8 note 44: a 0.4 s tell under each pillar
             this.marks = [];
           } else {
             const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), inArc = (fx * d.x + fz * d.z) / (dist || 1) > Math.cos(A.arc || 0.9);

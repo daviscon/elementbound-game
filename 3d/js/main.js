@@ -57,7 +57,7 @@ Level.init();
 onModel((kind, what, data) => {
   if (what === 'prop') {
     if (kind === 'ringed-staff') { player.staff.setModel(data); return; }
-    if (kind === 'captain-glaive') { for (const e of G.enemies) if (e.weapon) e.weapon.setModel(data); return; }
+    if (kind === 'captain-glaive') { for (const e of G.enemies) if (e.weapon && e.weapon.kind === 'glaive') e.weapon.setModel(data); return; }   // v8: never a soldier's spear
     placeProp(kind, data); return;
   }
   if (what === 'shared') { if (!G.noShared) { player.char.addShared(data); for (const e of G.enemies) e.char.addShared(data); if (Level.elderChar && /^(throw|walk)$/.test(data.logical)) Level.elderChar.addShared(data); } return; }
@@ -191,7 +191,7 @@ window.__game = {
   start: () => begin(),
   warp: (n) => warp(n),
   unlock: (...abs) => { for (const a of abs) player.unlocked[a] = true; },
-  grantAll: () => Object.assign(player.unlocked, { shot: true, step: true, whirl: true }),
+  grantAll: () => Object.assign(player.unlocked, { shot: true, step: true, whirl: true }),   // whirl = the double jump (v8 note 47)
   ceremony: (i) => ceremony(i), encounter: (id) => startEncounter(id), boss: (ph) => startBoss(ph),
   god: (on = true) => { G.god = on; },
   spawn: (kind = 'soldier', x, y, z, o = {}) => { const e = kind === 'captain' ? new Captain(new THREE.Vector3(x, y, z), { awake: true, encounter: o.encounter ?? 'test', ...o }) : new Soldier(new THREE.Vector3(x, y, z), { awake: true, encounter: o.encounter ?? 'test', role: kind === 'soldier' ? 'grunt' : kind, ...o }); e.lastGround = y; G.enemies.push(e); if (kind === 'captain') { G.boss = e; HUD.boss(e); } return e; },

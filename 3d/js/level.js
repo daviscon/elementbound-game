@@ -7,7 +7,7 @@
 //     slinger on the wall top.
 //  4. Terrace wave 1: two shield-bearers and a slinger on the walkway. Shrine 2: the Wind-Step. Wave 2: the
 //     Sergeant (a red sweep) and two grunts. Side path: the three chimes and a chest.
-//  5. Shrine 3: the Whirlwind Lift. The Captain on the bell terrace, three phases. His last fall rings the bell.
+//  5. Shrine 3: the Double Jump. The Captain on the bell terrace, three phases. His last fall rings the bell.
 //  6. The camera drifts to the waterfall: water is next. ✕ plays again.
 // Shrines double as checkpoints. Story camera moves are continuous (Cam.shot / Cam.release), never cuts.
 import * as THREE from 'three';
@@ -57,7 +57,7 @@ export const Level = {
     this.chimeHits = [null, null, null];
     V.chimes.forEach((c, i) => { const t = { pos: c.at.clone(), r: 0.6, done: false, i, onHit: (k) => chimeHit(i, k) }; c.target = t; G.targets.push(t); });
     // v3: no invisible barrier before the bell terrace: the fallen stairs (a 2.3 m face) are the gate, and the
-    // Whirlwind Lift from shrine 3 is how you climb them
+    // Double Jump from shrine 3 is how you climb them
     this.barrier3 = { x0: 0, x1: 0, z0: 0, z1: 0, y0: 0, y1: 0, off: true };
   },
 
@@ -78,7 +78,7 @@ export const Level = {
     const p = G.player, cp = G.checkpoint;
     const f = document.getElementById('fade'); f.style.opacity = 1;
     setTimeout(() => {
-      if (!fell) { p.hp = p.maxHp; p.breath = p.maxBreath; p.cd.gust = 0; p.cd.whirl = 0; }
+      if (!fell) { p.hp = p.maxHp; p.breath = p.maxBreath; p.cd.gust = 0; }
       const safe = fell && p.lastSafe.lengthSq() > 0 && !G.boss;
       p.spawn(safe ? p.lastSafe : cp.pos, safe ? p.yaw : cp.yaw); p.iframes = 1.5; HUD.shownHp = -1;
       if (!fell && G.encounter && !G.encounter.done) resetEncounter(G.encounter);
@@ -444,7 +444,7 @@ function encounterDone(enc) {
 const SHRINE = [
   { stage: 'shrine1', ab: 'shot', flag: 'attuned1', how: 'Hold [L2] to aim, [R2] to fire. It reaches what the staff cannot.', lore: 'The first monks spun the wind-wheels with their breath alone.' },
   { stage: 'shrine2', ab: 'step', flag: 'attuned2', how: '[○] becomes a gust-driven step that passes straight through red attacks.', lore: 'Air does not stand in the way of the blow. It is simply elsewhere.' },
-  { stage: 'bell', ab: 'whirl', flag: 'attuned3', how: '[L1+△] throws everyone near you into the air. In a jump [✕] it lifts you far higher.', lore: 'The bell was hung by wind, and wind will ring it.' },
+  { stage: 'bell', ab: 'whirl', flag: 'attuned3', how: 'In the air, [✕] again: a second jump off a puff of wind. Once per jump; landing resets it.', lore: 'The bell was hung by wind, and wind will ring it.' },
 ];
 function shrinePrompts(p) {
   if (G.state !== 'play') return;   // hotfix 12:05: no longer hidden while a distant enemy keeps 'combat' on
@@ -551,7 +551,7 @@ function ceremony(i) {
 function afterShrine(i) {
   if (i === 0) { Level.stage = 'stairs'; HUD.hint('Look up: the wind-wheel on the wall winches the gate. [L2] aim, [R2] gust', 5); }
   if (i === 1) { Level.stage = 'terrace2'; setTimeout(() => startEncounter('terrace2'), 1400); }
-  if (i === 2) { HUD.hint('The bell stairs have fallen. Jump [✕], then [L1+△] in the air: the wind carries you up', 7); }
+  if (i === 2) { HUD.hint('The bell stairs have fallen. Jump [✕], then [✕] again in the air: a double jump carries you up', 7); }
 }
 
 // ------------------------------------------------------------------ puzzles

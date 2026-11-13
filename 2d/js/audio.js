@@ -226,6 +226,10 @@ Object.assign(SFX_VOL, {
   'warden-cast-ground': 0.75, 'warden-cast-sky': 0.8, 'warden-cast-rush': 0.75, 'crystal-rush': 0.75, 'frost-crack': 0.6, 'slab-melt': 0.7,
   'arch-open': 0.75, 'pot-throw': 0.55, 'pot-burst': 0.65, 'aa-thrust': 0.6, 'aa-fire': 0.6, 'heal-ring': 0.6, 'post-hit': 0.6,
 });
+// Cycle 16 (Connor's notes 73, 75): the side gate sliding up and each guardian's new phase beat. ElevenLabs, 3 takes each,
+// best by earshot rank (tools/sfx-c16/rank.out), level-matched by tools/normalize-audio-c16.sh.
+const C16 = ['side-gate', 'colossus-phase', 'overseer-phase', 'captain-phase'];
+Object.assign(SFX_VOL, { 'side-gate': 0.6, 'colossus-phase': 0.7, 'overseer-phase': 0.65, 'captain-phase': 0.65 });
 const fileOf = (name) => 'sfx-' + (ALIAS[name] || name);
 // v15 (the chill pass): per-name minimum gaps between starts for the events that can fire in bursts, and the small
 // one-shots that give way first when many voices are already ringing
@@ -243,7 +247,7 @@ const PRELOAD = ['jump', 'dash', 'punch-hit', 'gust', 'deflect', 'ice-wall', 'ea
     'water-spout', 'wave-slam', 'boulder-impact', 'fireball-impact', 'wind-road', 'pin', 'skill-learn', 'shop-buy', 'region-card', 'boss-card',
     'phase-change', 'heal-breath', 'guard-break', 'downstrike-bounce', 'wall-kick', 'ledge-grab', 'jade-pickup', 'lotus-petal', 'door-slide',
     'brass-gate-open', 'wheel-spin', 'shutter-open', 'swing-heavy', 'punch-hit-2', 'punch-hit-3',
-    'updraft-loop', 'waterfall-loop', 'furnace-loop', 'fire-hazard-loop', 'splash', 'parry', 'knockout', 'boss-defeat', 'swing'], ...C5, ...C6, ...C7, ...C8, ...C9, ...C10, ...C11, ...C12, ...C13, ...C15];
+    'updraft-loop', 'waterfall-loop', 'furnace-loop', 'fire-hazard-loop', 'splash', 'parry', 'knockout', 'boss-defeat', 'swing'], ...C5, ...C6, ...C7, ...C8, ...C9, ...C10, ...C11, ...C12, ...C13, ...C15, ...C16];
 // Recorded region ambience (cycle 4); the synth beds stay underneath, quieter.
 // v5: 14 s beds (three takes joined) instead of 5 s loops, and a calm bed for the shrine interiors.
 const AMB_FILE = { kite: 'ambience-kite-hill-v5', drowned: 'ambience-drowned-steps-v5', quarry: 'ambience-ninefold-quarry-v5', kiln: 'ambience-kilnmouth-v5', brass: 'ambience-brass-gate-v5', shrine: 'ambience-shrine',

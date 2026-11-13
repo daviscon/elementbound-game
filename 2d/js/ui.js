@@ -438,7 +438,7 @@ export function drawTitle(ctx) {
   if (G.controls) drawControls(ctx);
   if (Sound.locked && !G.controls) text(ctx, Input.device() === 'touch' ? 'Tap for sound' : 'Press any key or click for sound', W / 2, H - 70, 22, '#ffe9a8', 'center', 700, 5);
   if (G.menu && G.menu.waitLoad) text(ctx, `Unrolling the far regions... ${Math.round(Assets.regionProgress(ROOMS[G.save.room] ? ROOMS[G.save.room].region : 'misc') * 100)}%`, W / 2, H - 110, 24, CREAM, 'center', 700, 5);
-  text(ctx, 'v0.14', W - 40, H - 36, 20, 'rgba(243,236,223,0.7)', 'right', 600, 4);
+  text(ctx, '1.1', W - 40, H - 36, 20, 'rgba(243,236,223,0.7)', 'right', 600, 4);
 }
 
 // --- pause ---------------------------------------------------------------------------

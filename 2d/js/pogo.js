@@ -92,6 +92,9 @@ export function aaPose(e) {
   if ((k === 'brawler' || k === 'slinger') && a && a.t < TELL + 0.35 && Assets.has('soldier.antiair')) return ['soldier.antiair', Math.min(7, Math.floor(a.t / (TELL + 0.35) * 8))];
   if (k === 'shield' && (e.guardUp > 0 || (a && !a.fired)) && Assets.has('shield.shieldup')) return ['shield.shieldup', e.guardUp > 0 ? Math.min(7, 2 + Math.floor((1.2 - e.guardUp) / 0.07)) : Math.min(1, Math.floor(a.t / TELL * 2))];
   if (k === 'parasol' && (e.spinT > 0 || (a && !a.fired)) && Assets.has('parasol.spin')) return ['parasol.spin', Math.floor(G.time * 16) % 8];
+  // v16 (Connor's note 75): the other guardians answer on their own antiair sheet (0-2 the tell, 3-7 the answer)
+  const AA = { overseer: 'overseer.antiair', colossus: 'colossus.antiair', captain: 'captain2.antiair' }[k];
+  if (AA && a && a.t < TELL + 0.35 && Assets.has(AA)) return [AA, a.t < TELL ? Math.min(2, Math.floor(a.t / TELL * 3)) : Math.min(7, 3 + Math.floor((a.t - TELL) / 0.07))];
   if (k === 'reed' && (e.upperT > 0 || (a && !a.fired))) {
     if (Assets.has('reed.uppercut')) return ['reed.uppercut', e.upperT > 0 ? Math.min(7, 3 + Math.floor((0.45 - e.upperT) / 0.09)) : Math.min(2, Math.floor(a.t / TELL * 3))];
     if (Assets.has('reed.windup')) return ['reed.windup', e.upperT > 0 ? 3 : Math.min(2, Math.floor(a.t / TELL * 3))];   // until it lands: the fists come up
@@ -106,7 +109,7 @@ export function drawAntiAir(ctx) {
     if (e.dead) continue;
     const top = e.y - e.h, a = e.aa;
     // v15 (note 68): the Warden shows no tell icon; his tell is the shoulder drop in his own uppercut sheet
-    if (a && !a.fired && !(e.boss && e.kind === 'reed' && Assets.has('reed.uppercut'))) {   // the tell: its own glint strip, or a gold-tinted spark until it lands
+    if (a && !a.fired && !(e.boss && (e.kind === 'reed' ? Assets.has('reed.uppercut') : Assets.has((e.kind === 'captain' ? 'captain2' : e.kind) + '.antiair')))) {   // v16: no icon over a guardian whose own sheet shows the tell   // the tell: its own glint strip, or a gold-tinted spark until it lands
       const f = Math.min(7, Math.floor(a.t / TELL * 8));
       if (!Assets.drawFx(ctx, 'fx.antiairtell', f, e.x, top - 6, 150, 1, { anchor: 'bottom' })) Assets.drawFx(ctx, 'fx.sparksmall', f, e.x, top - 50, 150, 1, { tint: 'rgba(255,196,60,0.85)', blend: 'lighter' });
     }

@@ -620,7 +620,7 @@ export function hurtPlayer(dmg, fromX, o = {}) {
   if (p.dead || p.inv > 0 || (p.slam && !o.force) || G.fade) return false;
   if (p.deflect > 0 && !o.force && !o.noParry) { parry(p.x + sign(fromX - p.x) * 60, p.y - 100, o.src); return false; }
   // v15 (Connor's note 68, as Hollow Knight does late in a fight): every blow in the Rime Warden's second phase costs 2
-  if (G.boss && !G.boss.dead && G.boss.kind === 'reed' && G.boss.phase >= 2 && dmg > 0) dmg = Math.max(dmg, 2);
+  if (G.boss && !G.boss.dead && G.boss.phase >= 2 && dmg > 0) dmg = Math.max(dmg, 2);   // v16 (note 75): every guardian's phase two costs 2 hearts a blow
   p.hp -= dmg; p.fightT = 0.8;
   p.sprint = false; p.castLock = 0;
   p.inv = 1.1; p.hurtT = 0.28; p.flash = 0.2; p.atk = null; p.dashT = 0; p.castT = 0; p.slam = null; p.gliding = false; p.ledge = null; p.wall = 0; p.healT = 0; p.bindT = 0; p.meditT = 0;

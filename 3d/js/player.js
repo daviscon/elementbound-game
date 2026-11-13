@@ -8,7 +8,7 @@
 //      flying kick (skill). While aiming (L2) it fires the aimed gust shot (once learned).
 //   L1 guard (hold); a tap just before a gold attack lands is a parry.  ○ roll, or the wind-step.
 //   ✕ jump (v3): the jump clip, coyote time 0.12 s, a 0.15 s jump buffer, release early for a short hop.
-//   L1+□ palm gust (8 s cooldown).  L1+△ whirlwind lift (once learned, 14 s); in the air it lifts the jump.
+//   L1+□ palm gust (8 s cooldown).  ✕ again in the air: the double jump (once shrine 3 is attuned; once per airtime).
 //   R3 lock on, or a takedown on a stunned enemy within reach.
 // Swings commit: only a dodge may interrupt a strike, and only after its hit frame.
 import { ONE_MODEL } from './assets.js';
@@ -26,6 +26,8 @@ import { Bend, gustShot } from './bending.js';
 
 const RUN = 6.4, AIMRUN = 3.0, GUARDRUN = 2.2, ACC = 60, AIRACC = 22, GRAV = 26;
 const BUFFER = 0.25, JUMP_BUFFER = 0.15, COYOTE = 0.12, JUMPV = 8.6;
+// v8 note 47: the double jump (unlock key stays `whirl`, it used to be the Whirlwind Lift): a second, slightly lower jump
+const JUMPV2 = 8.1;
 // the jump clip (clips/jump.glb, see tests/frames/strip-jump.jpg): push-off 0.50-0.72, tuck at the apex
 // 0.72-0.92, opening out 0.92-1.10, the landing crouch and recover 1.10-1.45
 const JC = { up: [0.5, 0.92], down: [0.92, 1.1], land: [1.1, 1.45] };
@@ -78,7 +80,7 @@ export class Player {
     // the slice starts with the staff and one air move; the rest are earned at shrines
     this.unlocked = { staff: true, gust: true, shot: false, step: false, whirl: false, fire: false };
     this.skills = {}; this.beads = 0;
-    this.cd = { gust: 0, whirl: 0, plunge: 0 }; this.cdMax = { gust: 8, whirl: 14, plunge: 0.35 };
+    this.cd = { gust: 0, plunge: 0 }; this.cdMax = { gust: 8, plunge: 0.35 }; this.dblUsed = false;
     this.onGround = true; this.coyote = 0; this.iframes = 0; this.hurtT = 0;
     this.action = null; this.chainNext = 0; this.chainGrace = 0; this.buffer = null;
     this.lean = 0; this.phase = 0; this.airT = 0; this.fallStartY = 0;
@@ -141,7 +143,7 @@ export class Player {
 
     // ---- input buffer: the last press is honoured for 0.25 s ----
     if (canAct) {
-      for (const a of ['light', 'heavy', 'dodge', 'gust', 'whirl', 'jump']) if (Input.pressed(a)) this.buffer = { a, t: rt };
+      for (const a of ['light', 'heavy', 'dodge', 'gust', 'jump']) if (Input.pressed(a)) this.buffer = { a, t: rt };
       if (this.buffer && rt - this.buffer.t > (this.buffer.a === 'jump' ? JUMP_BUFFER : BUFFER)) this.buffer = null;
       if (Input.pressed('guard')) this.guardPressT = rt;
       tickParry(Input.pressed('guard'));   // v5 (note 37): a press just after a gold hit still parries
@@ -160,7 +162,7 @@ export class Player {
     const fwd = _f.set(-Math.sin(Cam.yaw), 0, -Math.cos(Cam.yaw)), right = _r.set(Math.cos(Cam.yaw), 0, -Math.sin(Cam.yaw));
     const want = _v.set(0, 0, 0).addScaledVector(fwd, my).addScaledVector(right, mx);
     let act = this.action;
-    this.guard = canAct && Input.down('guard') && !Input.down('gust') && !Input.down('whirl') && (!act || act.kind === 'guardJolt') && this.hurtT <= 0 && this.onGround;
+    this.guard = canAct && Input.down('guard') && !Input.down('gust') && (!act || act.kind === 'guardJolt') && this.hurtT <= 0 && this.onGround;
     if (this.guard) this.drawNow();
     let maxSp = this.aiming ? AIMRUN : this.guard ? GUARDRUN : RUN;
     if (act) maxSp *= act.move ?? 0;
@@ -173,10 +175,9 @@ export class Player {
       const b = this.buffer.a;
       if (!act || act.kind === 'guardJolt' || (act.kind === 'draw' && act.t > 0.3)) {
         if (act && act.kind === 'draw' && b !== 'none') { this.action = null; act = null; }
-        if (b === 'jump') { if (this.canJump()) { this.buffer = null; this.startJump(); } }
+        if (b === 'jump') { if (this.canJump()) { this.buffer = null; this.startJump(); } else if (this.canDoubleJump()) { this.buffer = null; this.startDoubleJump(); } }
         else if (b === 'dodge' && this.onGround) { this.buffer = null; this.startDodge(want); }
         else if (b === 'gust') { this.buffer = null; if (this.unlocked.gust) this.startGust(); }
-        else if (b === 'whirl') { this.buffer = null; if (this.unlocked.whirl) this.startWhirl(); }
         else if (b === 'heavy' && this.aiming && this.unlocked.shot) { this.buffer = null; this.startShot(); }
         else if (b === 'heavy' && !this.aiming && this.onGround) {
           this.buffer = null;
@@ -190,8 +191,6 @@ export class Player {
           else if (this.runT > 0.35 && this.chainGrace <= 0) this.startStrike('thrust');
           else { const s = this.chainGrace > 0 ? this.chainNext : 0; this.startStrike(CHAIN[s], { step: s }); }
         }
-      } else if (act.kind === 'whirl' && b === 'light' && !this.onGround && act.t > 0.3 && this.canPlunge()) {
-        this.buffer = null; this.endAction(); this.startPlunge();   // v4 note 24: the slam also works after the Whirlwind Lift
       } else if (act.kind === 'strike') {
         // cancel window: the last 30% of the strike, after its hit
         const ok = act.clipT >= act.cancelAt;
@@ -251,7 +250,7 @@ export class Player {
     const wasGround = this.onGround;
     if (this.pos.y <= gh && this.vel.y <= 0) {
       if (!wasGround) this.land(this.fallStartY - gh);
-      this.jumping = false;
+      this.jumping = false; this.dblUsed = false;
       this.pos.y = gh; this.vel.y = 0; this.onGround = true;
       // a fall puts you back on the last ground that was not near an edge (v3: no long walk back)
       this.safeT = (this.safeT || 0) - dt;
@@ -358,6 +357,26 @@ export class Player {
     c.airPhase = 'up';
     Audio.play('jump', { vol: 0.75 }); FX.dust(this.pos, 2, 0.6);
     G.stats.jumps = (G.stats.jumps || 0) + 1;
+  }
+  // v8 note 47: ✕ again in the air, once per airtime (shrine 3): a second, slightly lower jump off a puff of wind
+  canDoubleJump() { return this.unlocked.whirl && !this.onGround && this.coyote <= 0 && !this.dblUsed && this.hurtT <= 0 && !this.dead; }
+  startDoubleJump() {
+    this.dblUsed = true; this.jumping = true; this.jumpCut = false; this.onGround = false;
+    this.vel.y = JUMPV2; this.fallStartY = this.pos.y; this.landT = 0;
+    const c = this.char;
+    if (c.hasClip('jump')) c.play('jump', { seg: JC.up, dur: 0.3, speed: (JC.up[1] - JC.up[0]) / 0.3, fade: 0.05, restart: true });
+    c.airPhase = 'up';
+    // the inked wind puff under his feet: a flat ring bursting outward and a few short curls pushing down
+    const UP = new THREE.Vector3(0, 1, 0), at = this.pos.clone().setY(this.pos.y + 0.05);
+    windRing(at, UP, { r: 0.25, r1: 1.15, travel: -0.35, dur: 0.3, tube: 0.06 });
+    windRing(at.clone().setY(at.y - 0.12), UP, { r: 0.15, r1: 0.7, travel: -0.5, dur: 0.24, tube: 0.045 });
+    for (let i = 0; i < 4; i++) {
+      const a = i / 4 * Math.PI * 2 + this.yaw + 0.4, s = Math.sin(a), co = Math.cos(a);
+      const p0 = at.clone().add(new THREE.Vector3(s * 0.2, 0.05, co * 0.2)), p2 = at.clone().add(new THREE.Vector3(s * 0.75, -0.55, co * 0.75));
+      windTube({ points: [p0, p0.clone().lerp(p2, 0.5).add(new THREE.Vector3(s * 0.15, 0.05, co * 0.15)), p2], dur: 0.28, radius: 0.035, seg: 0.55 });
+    }
+    Audio.play('windStep', { vol: 0.55, rate: 1.15 });
+    G.stats.doubleJumps = (G.stats.doubleJumps || 0) + 1;
   }
   // in the air: tuck on the way up, open out on the way down (driven by the vertical speed, not a timer)
   airAnim(c) {
@@ -561,16 +580,6 @@ export class Player {
       events: [{ u: 0.62, fn: (p) => Bend.palmGust(p, faceYaw) }],
       onEnd: () => { if (wasOut || this.combat) { this.staffOut = true; this.staff.setMode('hands', 0.2); } } };
   }
-  // ---------------- air: whirlwind lift (L1 + △) ----------------
-  startWhirl() {
-    if (this.cd.whirl > 0) { G.hud && G.hud.cooldownNope('whirl'); Audio.play('noBreath', { vol: 0.4 }); return; }
-    this.cd.whirl = this.cdMax.whirl;
-    this.drawNow();
-    G.hud && G.hud.used('whirl');
-    const c = this.char;
-    if (c.hasClip('sSpin')) c.play('sSpin', { seg: [0.5, 1.9], speed: 1.3, fade: 0.06, restart: true }); else c.play('whirl', { restart: true, fade: 0.06, dur: 1.1 });
-    this.action = Bend.whirlwind(this);
-  }
   // ---------------- v4 note 24: jump + R1, the plunging staff slam ----------------
   // At the apex Joon raises the staff overhead (a 0.12 s hang), then the code drives him straight down, ring
   // head first. Landing hits a ground circle (2.5 m, bigger from higher up) with an inked wind shock ring and
@@ -619,7 +628,7 @@ export class Player {
   }
   plungeLand(A) {
     const c = this.char, fall = Math.max(0, A.top - this.pos.y);
-    const k = Math.min(1, fall / 4);                  // 0 = a hop's height, 1 = 4 m or more (after the Whirlwind Lift)
+    const k = Math.min(1, fall / 4);                  // 0 = a hop's height, 1 = 4 m or more (a long fall)
     const R = 2.5 + k * 1.3, dmg = Math.round(11 + k * 9);
     A.phase = 'land'; A.endT = A.t + 0.5; this.cd.plunge = 0.35;
     this.staff.trailOff();

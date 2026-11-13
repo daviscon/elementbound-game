@@ -32,9 +32,11 @@ const SFX = {
   // v6 (ElevenLabs, 3 takes each, earshot rank: p2 'a man shouting' z +5.9 (the z +6.9 take read as 'a cow mooing'), p3 z +7.1)
   captainRoarP2: 'sfx8-captain-roar-p2', captainRoarP3: 'sfx8-captain-roar-p3', fireWhoosh: ['sfx7-fire-whoosh-1', 'sfx7-fire-whoosh-2', 'sfx7-fire-whoosh-3'],
   // v7 note 41 (ElevenLabs, 5-7 takes each, earshot rank: form z +3.2, throw z +4.1, shatter z +5.8; trimmed to t=0)
+  // v8 note 44: a soft fire set (ElevenLabs, 3-9 takes each, picked by loudness/attack/clipping stats: assets/audio/SFX-NOTES.md)
+  fireIgnite: 'sfx-fire-ignite', fireRoar: 'sfx-fire-roar', fireCrackle: 'sfx-fire-crackle-loop', fireJabWhoosh: 'sfx-fire-whoosh', fireRingBurst: 'sfx-fire-ring-burst',
   icicleForm: 'sfx9-icicle-form', icicleThrow: 'sfx9-icicle-throw', icicleShatter: 'sfx9-icicle-shatter',
 };
-const VOL = { icicleForm: 0.95, icicleThrow: 1.0, icicleShatter: 1.0, captainRoarP2: 0.75, captainRoarP3: 0.8, parryTell: 0.75, fireWhoosh: 0.6, step: 0.28, soldierStep: 0.2, tick: 0.25, switch: 0.35, land: 0.55, swing: 0.5, bell: 1.0, captainRoar: 0.9,
+const VOL = { fireIgnite: 0.5, fireRoar: 0.55, fireCrackle: 0.4, fireJabWhoosh: 0.45, fireRingBurst: 0.55, icicleForm: 0.95, icicleThrow: 1.0, icicleShatter: 1.0, captainRoarP2: 0.75, captainRoarP3: 0.8, parryTell: 0.75, fireWhoosh: 0.6, step: 0.28, soldierStep: 0.2, tick: 0.25, switch: 0.35, land: 0.55, swing: 0.5, bell: 1.0, captainRoar: 0.9,
   jingle: 0.45, staffWhoosh: 0.7, staffWhooshHeavy: 0.75, staffHit: 0.9, staffHitHeavy: 0.95, parry: 0.9, block: 0.85, sigGold: 0.7, sigRed: 0.75,
   attune: 0.55, unlock: 0.5, palmGust: 0.55, chime1: 0.35, chime2: 0.6, chime3: 0.6, menuMove: 0.45, menuConfirm: 0.4, menuBack: 0.45, heartGain: 0.5, bead: 0.6, dazed: 0.6, staffDraw: 0.95, cloudPuff: 1.6, jump: 0.9 };   // v3: cloud-puff is ~4 LU quieter than the old file
 const MUSIC = { hill: 'music-kite-hill', captain: 'music-captain', ending: 'music-ending', title: 'music-title' };

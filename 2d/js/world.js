@@ -349,7 +349,7 @@ export function spinWheel(w) {
   w.done = true;
   const g = G.room.gates.find((q) => q.id === w.gate);
   setFlag(w.gate);
-  if (g) { g.open = true; g.lifting = true; shake(5); Sound.sfx('shutter', { delay: 0.3 }); Sound.rumble(0.3, 0.3, 600); }
+  if (g) { g.open = true; g.lifting = true; shake(5); Sound.sfx(sideExitArt(G.room) ? 'side-gate' : 'shutter', { delay: 0.3 }); Sound.rumble(0.3, 0.3, 600); }   // v16: the edge-on gate's own soft slide
   // v9: in the Bell Loft the three rigs together wake the great bell
   if (w.hold) { const b = (G.room.def.props || []).find((a) => a[0] === 'bellshrine'); if (b) ringBell(b, 0.2); }
   rebuildCol();
@@ -807,7 +807,7 @@ function drawFrost(ctx, room, view, t) {
 // { x, y, side }: a warm-cool glow at the opening, slow shafts of light leaning out of it and a carved arch over it.
 function drawShrineLight(ctx, L, t) {
   const dir = L.side === 'left' ? 1 : -1, x = L.x, y = L.y;
-  if (Assets.get('prop.shrineopening')) { const so = Assets.get('prop.shrineopening'), h = 460, w = so.img.width * h / so.img.height, ax = x + 150 * dir; ctx.save(); ctx.globalAlpha = 0.92 + 0.08 * Math.sin(t * 1.3); if (dir < 0) { ctx.translate(ax, 0); ctx.scale(-1, 1); ctx.translate(-ax, 0); } ctx.drawImage(so.img, ax - w / 2, y + 4 - h, w, h); ctx.restore(); return; }   // v14 (note 57)
+  if (Assets.get('prop.shrineopening') && !sideExitArt(G.room)) { const so = Assets.get('prop.shrineopening'), h = 460, w = so.img.width * h / so.img.height, ax = x + 150 * dir; ctx.save(); ctx.globalAlpha = 0.92 + 0.08 * Math.sin(t * 1.3); if (dir < 0) { ctx.translate(ax, 0); ctx.scale(-1, 1); ctx.translate(-ax, 0); } ctx.drawImage(so.img, ax - w / 2, y + 4 - h, w, h); ctx.restore(); return; }   // v14 (note 57)
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   const g = ctx.createRadialGradient(x, y - 160, 20, x, y - 160, 520);
@@ -821,7 +821,8 @@ function drawShrineLight(ctx, L, t) {
   ctx.restore();
   // the carved arch: props/shrine-opening.png (a mossy carved arch with light rays) once it lands, else code posts
   const so = Assets.get('prop.shrineopening');
-  if (so) { const h = 460, w = so.img.width * h / so.img.height, ax = x + 150 * dir; ctx.save(); if (dir < 0) { ctx.translate(ax, 0); ctx.scale(-1, 1); ctx.translate(-ax, 0); } ctx.drawImage(so.img, ax - w / 2, y + 4 - h, w, h); ctx.restore(); return; }
+  if (so && !sideExitArt(G.room)) { const h = 460, w = so.img.width * h / so.img.height, ax = x + 150 * dir; ctx.save(); if (dir < 0) { ctx.translate(ax, 0); ctx.scale(-1, 1); ctx.translate(-ax, 0); } ctx.drawImage(so.img, ax - w / 2, y + 4 - h, w, h); ctx.restore(); return; }
+  if (sideExitArt(G.room)) return;   // v16 (note 73): the post is drawn with the exits
   ctx.save();
   const ax = x + 150 * dir, w = 220, h = 360;
   ctx.fillStyle = '#5d6f6c'; ctx.strokeStyle = '#1b1416'; ctx.lineWidth = 5;
@@ -842,15 +843,32 @@ function drawOnewayKit(ctx, o, room) {
     // a crumbling ledge is marked: loose clay tiles, a darker underside and two cracks, so it is read before it is trusted
     drawOnewayKitPlain(ctx, o, room);
     // v14 (note 57): props/ledge-cracks.png laid over the ledge top once it lands, instead of the code cracks
-    const lc = Assets.items['prop.ledgecracks']; if (lc) { ctx.drawImage(lc.canvas, 0, 0, lc.fw, lc.fh, o.x, o.y - 6, o.w, o.w * lc.fh / lc.fw); return; }
+    const lc = Assets.items['prop.ledgecracks']; if (lc) { const k7 = Assets.items['prop.kit7-' + room.region] ? 6 : -6; ctx.drawImage(lc.canvas, 0, 0, lc.fw, lc.fh, o.x + (k7 > 0 ? o.w * 0.06 : 0), o.y + k7, o.w * (k7 > 0 ? 0.88 : 1), o.w * lc.fh / lc.fw); return; }   // v16: inside the r7 slab's top
     ctx.save(); ctx.strokeStyle = 'rgba(30,16,20,0.75)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
     for (const k of [0.3, 0.68]) { const cx = o.x + o.w * k; ctx.beginPath(); ctx.moveTo(cx, o.y + 2); ctx.lineTo(cx + 10, o.y + 18); ctx.lineTo(cx - 4, o.y + 32); ctx.stroke(); }
     ctx.restore(); return;
   }
   drawOnewayKitPlain(ctx, o, room);
 }
+// v16 (Connor's note 72: the mossy stone pillars "don't fit the vibe"): every platform outside is drawn from its region's
+// own kit (props/platform-kit-<region>-r7.png: 1 a ledge out of a left wall, 2 out of a right wall, 3 a slab, 4 a long
+// slab, 5 a small slab, 6 a thin beam; walk line 448 px down each 1152 px cell). The art is fitted to the SAME collision
+// box: the walk line on the platform top, the slab across its width. No pillar, chain or rack under or over it; a slab
+// floats, as in the Warden's arena. Interior shelves, rope bridges and the ice arena keep their own art.
+const KIT7_WALK = 448 / 1152;
+function drawKit7(ctx, o, room) {
+  if (o.held === 'float' || (o.held && o.held.startsWith('ice')) || o.style === 'rope' || (o.style.startsWith('in:') && !/^wall[LR]$/.test(o.held || '')) || room.def.frost) return false;
+  const it = Assets.items['prop.kit7-' + room.region]; if (!it || !it.frames) return false;
+  const wall = o.held === 'wallL' || o.held === 'cliff' ? 'L' : o.held === 'wallR' ? 'R' : null;
+  const f = wall === 'L' ? 0 : wall === 'R' ? 1 : o.w < 190 ? 4 : o.w < 330 ? 2 : 3, b = it.frames[f]; if (!b) return false;
+  const x0 = wall === 'L' && o.wallX != null ? Math.min(o.x, o.wallX) : o.x - (wall ? 0 : o.w * 0.03), x1 = wall === 'R' && o.wallX != null ? Math.max(o.x + o.w, o.wallX) : o.x + o.w + (wall ? 0 : o.w * 0.03);
+  const bw = b.x1 - b.x0 + 1, bh = b.y1 - b.y0 + 1, sx = (x1 - x0) / bw, sy = Math.min(sx, 1.3), walk = KIT7_WALK * it.fh;
+  ctx.drawImage(it.canvas, f * it.fw + b.x0, b.y0, bw, bh, x0, o.y - (walk - b.y0) * sy, x1 - x0, bh * sy);
+  return true;
+}
 function drawOnewayKitPlain(ctx, o, room) {
   if (o.held === 'float') { drawIceSlab(ctx, o); return; }
+  if (drawKit7(ctx, o, room)) return;
   if (o.held && drawHeld(ctx, o, room)) return;
   if (o.style === 'rope') { D.drawOneway(ctx, o, room.pal); return; }
   if (o.style.startsWith('in:')) {
@@ -1029,6 +1047,9 @@ function drawGateKit(ctx, g, room, t) {
     }
     return;
   }
+  // v16 (Connor's note 73): a shutter in a side wall is seen side-on: the door post in profile with the gate edge-on beside
+  // it (props/side-exit-<region>.png frame 1), the gate sliding up out of the way as it lifts
+  if (g.t === 'shutter' && sideExitArt(room)) { drawSideExit(ctx, room, g.x + g.w / 2, g.y + g.h + 4, g.h + 150, g.x < room.w / 2 ? 'left' : 'right', 1 - g.lift); return; }
   if (g.t === 'shutter' || g.t === 'brass') {
     if (g.lift >= 1) return;
     const lift = g.lift * g.h, door = Assets.get('prop.gatedoortall'), fr = gateFrameBox(g, room);
@@ -1059,6 +1080,7 @@ function gateFrameBox(g, room) {
 }
 // The frame stays standing once the door is up (drawn behind Joon; the door branch above draws it while shut)
 function drawGateFrame(ctx, g, room) {
+  if (g.t === 'shutter' && sideExitArt(room)) { if (g.lift >= 1) drawSideExit(ctx, room, g.x + g.w / 2, g.y + g.h + 4, g.h + 150, g.x < room.w / 2 ? 'left' : 'right', 0); return; }   // v16
   const fr = g.lift >= 1 ? gateFrameBox(g, room) : null;
   if (fr) ctx.drawImage(fr.img, fr.x, fr.y, fr.w, fr.h);
 }
@@ -1253,9 +1275,43 @@ export function drawProps(ctx, list, region, o = {}) {
   }
 }
 
+// v16 (Connor's note 73: "the doors on the side of each section should be to the side rather than facing the player"):
+// a way out through a side wall is seen side-on. The wall stops short and its end stands in profile at the threshold
+// (props/side-exit-<region>.png frame 0: the post, its cap or lintel reaching into the room); a locked one has its gate
+// edge-on beside the post (frame 1), which slides up out of the way as it opens. Front-facing doors and passages stay
+// only where Joon walks INTO the background (cellar stairs, mine passages, the boss doors).
+const sideExitArt = (room) => Assets.items['prop.sideexit-' + room.region] ? 'prop.sideexit-' + room.region : null;
+function drawSideExit(ctx, room, x, floorY, h, side, lock = 0) {
+  const key = sideExitArt(room), it = key && Assets.items[key]; if (!it || !it.frames) return false;
+  const b = it.frames[0], w = h * (b.x1 - b.x0 + 1) / (b.y1 - b.y0 + 1), face = side === 'left' ? 1 : -1;
+  if (x == null) x = side === 'left' ? w / 2 - 6 : room.w - w / 2 + 6;   // at the room's edge: the post stands just inside it
+  Assets.drawFxBox(ctx, key, 0, x, floorY, w, face, { anchor: 'bottom', refF: 0 });
+  if (lock > 0) {
+    // the gate: frame 1's bars only (the part of the cell beside the post), raised by (1 - lock) of its height
+    const s = w / (b.x1 - b.x0 + 1), cut = b.x0 + (b.x1 - b.x0 + 1) * 0.47, lift = (1 - lock) * h * 0.95;
+    ctx.save(); ctx.beginPath();
+    const ex = x + face * ((cut - (b.x0 + b.x1 + 1) / 2) * s);
+    ctx.rect(face > 0 ? ex : ex - w, floorY - h * 1.2, w, h * 1.2 + 10); ctx.clip();
+    Assets.drawFxBox(ctx, key, 1, x, floorY - lift, w, face, { anchor: 'bottom', refF: 0, alpha: Math.min(1, lock * 4) });
+    ctx.restore();
+  }
+  return true;
+}
+// the post for each side exit of an interior or shaft room, at the floor where you walk out
+function drawSideJambs(ctx, room) {
+  const bg = room.def.bg || {}; if (!(bg.kind === 'in' || bg.kind === 'shaft' || bg.interior) || !sideExitArt(room)) return;
+  for (const e of room.exits) {
+    if (e.side === 'bottom') continue;
+    const left = e.side === 'left', y0 = Math.max(0, e.range[0]), y1 = Math.min(room.h, e.range[1]);
+    if (room.gates.some((g) => g.t === 'shutter' && (left ? g.x < 400 : g.x + g.w > room.w - 400))) continue;
+    const floors = room.solids.filter((s) => !s.blockage && (left ? s.x <= 2 : s.x + s.w >= room.w - 2) && s.y > y0 && s.y <= y1 + 4).map((s) => s.y);
+    for (const fy of new Set(floors)) drawSideExit(ctx, room, null, fy + 4, Math.min(560, fy - y0 + 40), e.side, 0);
+  }
+}
 // v9 (Connor's note 8): every exit reads as a way out: a soft light from the next room along the edge, and when Joon
 // is near, three pale chevrons at the height you walk out at.
 function drawExits(ctx, room, t) {
+  drawSideJambs(ctx, room);
   if (room.barriers.length || G.boss) return;
   const p = G.player;
   for (const e of room.exits) {
@@ -1287,7 +1343,10 @@ function drawExitArch(ctx, room, a, t) {
   if (open && room.archOpenAt == null) { room.archOpenAt = room.seenSealed ? room.time : -99; if (room.seenSealed) { Sound.sfx('arch-open', { x: left ? 120 : room.w - 120 }); shake(4); } }
   if (!open) room.seenSealed = true;
   const k = open ? clamp((room.time - room.archOpenAt) / 1.4, 0, 1) : 0, x = left ? 120 : room.w - 120;
-  if (Assets.has('prop.icearch')) {
+  if (sideExitArt(room)) {
+    // v16 (note 73): the sealed way out is side-on: the post in profile, its gate edge-on, sliding up as the seal breaks
+    drawSideExit(ctx, room, null, a.y + 4, 520, a.side, 1 - k);
+  } else if (Assets.has('prop.icearch')) {
     const f = !open ? Math.floor(t * 3) % 2 : Math.min(7, 2 + Math.floor(k * 6)), aw = 290;
     Assets.drawFxBox(ctx, 'prop.icearch', f, left ? aw / 2 - 6 : room.w - aw / 2 + 6, a.y + 6, aw, left ? 1 : -1, { anchor: 'bottom', refF: 0 });
   } else {

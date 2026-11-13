@@ -1,7 +1,7 @@
 // v7 (Connor's note 43): Roblox-style touch controls, painted in the game's own UI.
 //  left third, lower area: a floating thumbstick that appears where the thumb lands -> Input.move
 //  anywhere else that is not a button: drag the camera -> Input.look (radians, Input.touchSens per CSS px)
-//  bottom-right: a big Attack with Jump / Heavy / Dodge / Guard around it; above: Whirl, Gust, Lock, Interact
+//  bottom-right: a big Attack with Jump / Heavy / Dodge / Guard around it; above: Gust, Lock, Interact
 //  top-right: Show the way and Pause. Buttons are real inputs: input.js ORs Input.touchHeld into the same
 //  per-frame action state the pad and keyboard use, so press / hold / release behave identically.
 // Activates on (pointer: coarse), on the first touchstart, or with ?touch / ?mobile. Also: the rotate card in
@@ -34,13 +34,13 @@ export function setQuality(q) {
 }
 
 // ------------------------------------------------------------------ DOM
-const BTN = (act, cls = '') => `<div class="tb ${cls}" data-act="${act}" aria-label="${TNAME[act]}">${act === 'gust' || act === 'whirl' ? `<img src="assets/ui/cut/ab-${act}.png" alt=""><i class="cd"></i>` : TICON[act]}</div>`;
+const BTN = (act, cls = '') => `<div class="tb ${cls}" data-act="${act}" aria-label="${TNAME[act]}">${act === 'gust' ? `<img src="assets/ui/cut/ab-${act}.png" alt=""><i class="cd"></i>` : TICON[act]}</div>`;
 function build() {
   const d = document.createElement('div'); d.id = 'touch'; d.className = 'off';
   d.innerHTML = `<div id="t-stick"><div id="t-base"></div><div id="t-knob"></div></div>
     <div id="t-top">${BTN('guide', 'sm')}${BTN('pause', 'sm')}</div>
     <div id="t-pad">${BTN('light', 'big')}${BTN('jump')}${BTN('heavy')}${BTN('dodge')}${BTN('guard')}${BTN('aim')}
-      ${BTN('whirl', 'air')}${BTN('gust', 'air')}${BTN('lock', 'air')}${BTN('interact', 'air')}</div>`;
+      ${BTN('gust', 'air')}${BTN('lock', 'air')}${BTN('interact', 'air')}</div>`;
   document.body.appendChild(d);
   const r = document.createElement('div'); r.id = 'rotate'; r.className = 'hidden';
   r.innerHTML = `<div class="card"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="22" y="8" width="20" height="36" rx="4"/><path d="M14 50 A22 22 0 0 0 50 50" class="t"/><path d="M44 44 L50 50 L56 44" class="t"/></svg><div class="t1">Rotate your phone</div><div class="t2">Kite Hill plays in landscape</div></div>`;
@@ -167,9 +167,9 @@ function tick() {
   if (vis !== lastVis) { lastVis = vis; $('touch').className = vis; if (vis === 'off') releaseAll(); }
   const ln = $('load-note'); if (ln && /PlayStation/.test(ln.textContent)) ln.textContent = 'Tap anywhere to begin · play in landscape';
   const p = G.player; if (!p || vis === 'off') return;
-  const avail = ['whirl', 'shot'].filter((k) => !p.unlocked[k]).join(',');
-  if (avail !== lastAvail) { lastAvail = avail; document.querySelector('#touch [data-act="aim"]').classList.toggle('gone', !p.unlocked.shot); for (const k of ['whirl']) document.querySelector(`#touch [data-act="${k}"]`).classList.toggle('gone', !p.unlocked[k]); }
-  for (const k of ['gust', 'whirl']) {
+  const avail = ['shot'].filter((k) => !p.unlocked[k]).join(',');
+  if (avail !== lastAvail) { lastAvail = avail; document.querySelector('#touch [data-act="aim"]').classList.toggle('gone', !p.unlocked.shot); }
+  for (const k of ['gust']) {
     const el = document.querySelector(`#touch [data-act="${k}"] .cd`); if (!el) continue;
     const cd = p.cd && p.cd[k], mx = p.cdMax && p.cdMax[k]; el.style.setProperty('--k', cd && mx ? (cd / mx).toFixed(3) : 0);
   }

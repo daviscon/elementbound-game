@@ -10,8 +10,8 @@ An original elemental-bending action game you can play free in your browser. It 
 ## Controls
 | | Controller | Keyboard and mouse | Touch |
 |---|---|---|---|
-| **2D** | Stick move · ✕ jump · □ strike · ○ dash · L1/L2/R1/R2 bending | Arrows move · Space jump · Z strike · X or Shift dash · A S D F bending · Q heal · ↑/E interact · Tab map · Esc pause | Left thumbstick · Jump, Strike, Dash and bending buttons on the right |
-| **3D** | See the in-game Controls page (pause menu) | WASD move · mouse look · left-click strike (hold for heavy) · Space jump · Shift dodge · Q guard/parry · E interact · Tab/middle-click lock on | Left thumbstick · drag to look · Attack and action buttons on the right |
+| **2D** | Stick move · ✕ jump · □ strike · ○ dash · L1/L2/R1/R2 bending | Arrows move · Space jump · Z strike · X or Shift dash · A S D F bending · Q heal (instant) · ↑/E interact · Tab map · Esc pause | Left thumbstick · Jump, Strike, Dash and bending buttons on the right |
+| **3D** | See the in-game Controls page (pause menu) | WASD move · mouse look · left-click strike (hold for heavy) · Space jump · Shift dodge · Q guard/parry · E interact · Tab or middle-click lock on (flick the mouse to switch target) · Space again in the air to double jump | Left thumbstick · drag to look · Attack and action buttons on the right |
 
 Both games show the right button prompts for whatever you used last.
 

@@ -110,7 +110,7 @@ function endAttune(done) {
 
 // --- drawing ---------------------------------------------------------------------------------
 const MOTE_COL = { air: ['#ffffff', '#eafcff', '#bfe9f2'], water: ['#bfe9f2', '#4aa3d8', '#ffffff'], earth: ['#c39a5b', '#e9dcc0', '#7d5a2c'], fire: ['#ffd36b', '#f0742a', '#fff3c4'] };
-// World space: the motes, the gather spiral at the palms (fx-attune-<el>.png when it exists), the pulse rings.
+// World space: the motes and the pulse rings.
 export function drawAttuneWorld(ctx) {
   const A = G.attune; if (!A) return;
   const hand = palms(), cols = MOTE_COL[A.P.el];
@@ -124,14 +124,9 @@ export function drawAttuneWorld(ctx) {
     else { ctx.beginPath(); ctx.arc(x, y, (m.el === 'water' ? 6 : 5) * m.s, 0, 7); ctx.fill(); }
   }
   ctx.globalAlpha = 1;
-  const key = 'fx.attune-' + A.P.el, k = A.phase === 'card' ? 1 : A.charge;
-  if (k > 0.02) {
-    if (!Assets.drawFx(ctx, key, Math.floor(G.time * 12) % 8, hand.x, hand.y, 120 + 260 * k, G.player.face, { alpha: 0.4 + 0.6 * k })) {
-      const g = ctx.createRadialGradient(hand.x, hand.y, 2, hand.x, hand.y, 40 + 120 * k);
-      g.addColorStop(0, `rgba(255,255,255,${0.9 * k})`); g.addColorStop(0.4, D.hexA(ELEMENTS[A.P.el].color, 0.55 * k)); g.addColorStop(1, D.hexA(ELEMENTS[A.P.el].color, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hand.x, hand.y, 40 + 120 * k, 0, 7); ctx.fill();
-    }
-  }
+  // v16 (Connor's note 74: "a cool animation around Joon but there is also a weird low-quality swirl too"): the swirl
+  // was the gather spiral at the palms (fx-attune-<el>.png, drawn additively up to 380 px over him). It is gone; the
+  // gathering motes and the attune ring on the floor are the animation.
   // v11 (review 11 #11, C1): each pulse is the painted ring of breath spreading over the floor from the kneeling figure,
   // not a hard white circle
   if (A.ring > 0) {

@@ -16,7 +16,7 @@ const CUT = 'assets/ui/cut/';
 // pad glyph names -> painted pieces; keyboard equivalents for when no pad is in use
 const PADG = { '✕': 'cross', '○': 'circle', '□': 'square', '△': 'triangle', L1: 'L1', R1: 'R1', L2: 'L2', R2: 'R2', L3: 'L3', R3: 'R3', OPTIONS: 'options', BACK: 'circle', LS: 'ls', RS: 'rs', DPAD: 'dpad' };
 // v4 note 27: the PC scheme (keys drawn as keycaps, the mouse as a painted mouse with the button lit)
-const KB = { '✕': 'Space', '○': 'Shift', '□': '', '△': 'E', L1: 'Q', R1: 'LMB', L2: 'RMB', R2: 'Hold LMB', L3: '', R3: 'MMB', OPTIONS: 'Esc', BACK: 'Backspace', LS: 'WASD', RS: 'Mouse', DPAD: 'H', 'L1+□': '1', 'L1+△': '2', 'L2+R2': 'RMB+LMB' };
+const KB = { '✕': 'Space', '○': 'Shift', '□': '', '△': 'E', L1: 'Q', R1: 'LMB', L2: 'RMB', R2: 'Hold LMB', L3: '', R3: 'MMB', OPTIONS: 'Esc', BACK: 'Backspace', LS: 'WASD', RS: 'Mouse', DPAD: 'H', 'L1+□': '1', 'L2+R2': 'RMB+LMB' };
 const MOUSE = { LMB: 'L', RMB: 'R', MMB: 'M', 'Hold LMB': 'L' };
 function kbGlyph(k) {
   if (MOUSE[k]) return `${k === 'Hold LMB' ? '<span class="kbw">hold</span>' : ''}<span class="kb mouse m${MOUSE[k]}"><b></b></span>`;
@@ -26,6 +26,7 @@ export function glyph(spec) {
   // v7 note 43: touch glyphs (the on-screen button's painted icon) when the last input was a touch
   if (Input.usingTouch) { if (TOUCHMAP[spec]) return tglyph(TOUCHMAP[spec]); return spec.split('+').map((s) => TOUCHMAP[s] ? tglyph(TOUCHMAP[s]) : s).join('<span>+</span>'); }
   const pad = Input.usingPad;   // v4: the LAST device used decides, even with a pad plugged in
+  if (!pad && spec === 'R3') return kbGlyph('MMB') + '<span class="kbw">or</span>' + kbGlyph('Tab');   // v8 note 46: both lock/takedown keys
   if (!pad) { if (KB[spec] !== undefined) return KB[spec].split('+').map(kbGlyph).join('<span>+</span>'); return spec.split('+').map((s) => kbGlyph(KB[s] || s)).join('<span>+</span>'); }
   return spec.split('+').map((s) => PADG[s] ? `<img class="g" src="${CUT}pad-${PADG[s]}.png" alt="${s}">` : s).join('<span>+</span>');
 }
@@ -36,7 +37,7 @@ const ABIL = {
   gust: { icon: 'ab-gust', keys: 'L1+□', name: 'Palm Gust' },
   shot: { icon: 'ab-shot', keys: 'L2+R2', name: 'Aimed Gust' },
   step: { icon: 'ab-step', keys: '○', name: 'Wind-Step' },
-  whirl: { icon: 'ab-whirl', keys: 'L1+△', name: 'Whirlwind Lift' },
+  whirl: { icon: 'ab-djump', keys: '✕', name: 'Double Jump' },   // v8 note 47: the unlock key stays `whirl`
   blade: { icon: 'ab-blade', keys: 'R2', name: 'Wind Blade' },
   water: { icon: 'ab-water-lock', keys: '', name: 'Water' },
 };
@@ -175,7 +176,7 @@ export const HUD = {
       if (v.z > 1 || Math.abs(v.x) > 1.1 || Math.abs(v.y) > 1.1) continue;
       seen.add(e);
       let el = this.markEls.get(e);
-      if (!el) { el = document.createElement('div'); el.className = 'mk'; el.innerHTML = `<img class="sig hidden" alt=""><div class="ehp" style="position:relative;width:80px;height:19px;margin-top:1px"><div class="lag" style="position:absolute;left:7%;top:7px;height:5px;width:86%;background:rgba(255,211,138,.75);border-radius:3px;transition:width .6s ease-in .3s"></div><div class="clip" style="position:absolute;left:0;top:0;height:19px;width:100%;overflow:hidden"><img src="${CUT}boss-fill.png" alt="" style="width:80px;height:19px;display:block"></div><img src="${CUT}boss-frame.png" alt="" style="position:absolute;left:0;top:0;width:80px;height:19px"><i style="position:absolute;left:20%;top:4px;width:2px;height:11px;background:#1d1620;opacity:.7"></i></div><img class="r3 hidden" src="${CUT}pad-R3.png" alt="">`; $('marks').appendChild(el); this.markEls.set(e, el); }
+      if (!el) { el = document.createElement('div'); el.className = 'mk'; el.innerHTML = `<img class="sig hidden" alt=""><div class="ehp" style="position:relative;width:80px;height:19px;margin-top:1px"><div class="lag" style="position:absolute;left:7%;top:7px;height:5px;width:86%;background:rgba(255,211,138,.75);border-radius:3px;transition:width .6s ease-in .3s"></div><div class="clip" style="position:absolute;left:0;top:0;height:19px;width:100%;overflow:hidden"><img src="${CUT}boss-fill.png" alt="" style="width:80px;height:19px;display:block"></div><img src="${CUT}boss-frame.png" alt="" style="position:absolute;left:0;top:0;width:80px;height:19px"><i style="position:absolute;left:20%;top:4px;width:2px;height:11px;background:#1d1620;opacity:.7"></i></div><span class="r3 hidden"></span>`; $('marks').appendChild(el); this.markEls.set(e, el); }
       el.style.left = ((v.x + 1) / 2 * W) + 'px'; el.style.top = ((1 - v.y) / 2 * H) + 'px';
       const sig = el.querySelector('.sig');
       if (e.sig) { const src = CUT + 'sig-' + e.sig + '.png'; if (sig.dataset.k !== e.sig) { sig.src = src; sig.dataset.k = e.sig; sig.classList.remove('pop'); void sig.offsetWidth; sig.classList.add('pop'); } sig.classList.remove('hidden'); }
@@ -183,7 +184,8 @@ export const HUD = {
       const hb = el.querySelector('.ehp'); hb.style.display = e.boss || !e.maxHp || !hurt ? 'none' : '';
       if (!e.boss && e.maxHp) { const k = Math.max(0, Math.min(1, e.hp / e.maxHp)); hb.querySelector('.clip').style.width = (k * 100) + '%'; hb.querySelector('.lag').style.width = (k * 86) + '%'; }
       const r3 = el.querySelector('.r3'); r3.classList.toggle('hidden', !e.stunned);
-      if (e.stunned) r3.src = CUT + 'pad-R3.png'; r3.style.filter = Input.usingPad ? '' : 'none'; r3.title = Input.usingPad ? 'R3' : 'MMB';
+      // v8 note 46: the live glyph for the scheme in use (R3 on pad, middle mouse or Tab on keyboard and mouse, the Lock button on touch)
+      if (e.stunned) { const k = Input.usingTouch ? 't' : Input.usingPad ? 'p' : 'k'; if (r3.dataset.k !== k) { r3.dataset.k = k; r3.innerHTML = glyph('R3'); } }
     }
     for (const [e, el] of this.markEls) if (!seen.has(e)) { el.remove(); this.markEls.delete(e); }
     // edge arrows for wind-ups that start off-screen, gold or red to match

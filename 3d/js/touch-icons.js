@@ -10,7 +10,6 @@ export const TICON = {
   guard: S('<path d="M12 3 L19 6 V11 C19 16 15.5 19.5 12 21 C8.5 19.5 5 16 5 11 V6 Z"/>'),
   lock: S('<circle cx="12" cy="12" r="6.5"/><path d="M12 2 V6 M12 18 V22 M2 12 H6 M18 12 H22"/><circle cx="12" cy="12" r="1.4" class="f"/>'),
   gust: S('<path d="M3 9 H14 A3 3 0 1 0 11 6"/><path d="M3 14 H18 A3 3 0 1 1 15 17"/><path d="M3 19 H9" class="t"/>'),
-  whirl: S('<path d="M4 5 H20"/><path d="M6 9 H18"/><path d="M8 13 H16"/><path d="M10 17 H14"/><path d="M12 20 V21"/>'),
   interact: S('<path d="M8 12 V6.5 a1.5 1.5 0 0 1 3 0 V11 V4.5 a1.5 1.5 0 0 1 3 0 V11 V6 a1.5 1.5 0 0 1 3 0 V14 C17 18 15 21 11.5 21 C8.5 21 7 19 5.5 16 L4.3 13.6 a1.4 1.4 0 0 1 2.4 -1.4 Z"/>'),
   pause: S('<path d="M9 6 V18 M15 6 V18"/>'),
   guide: S('<circle cx="12" cy="12" r="8"/><path d="M15.5 8.5 L13 13 L8.5 15.5 L11 11 Z" class="f"/>'),
@@ -19,9 +18,9 @@ export const TICON = {
   stick: S('<circle cx="12" cy="12" r="9" class="t"/><circle cx="12" cy="12" r="4.5" class="f"/>'),
   drag: S('<path d="M4 12 H20 M7 9 L4 12 L7 15 M17 9 L20 12 L17 15"/><circle cx="12" cy="12" r="2" class="f"/>'),
 };
-export const TNAME = { light: 'Attack', heavy: 'Heavy', jump: 'Jump', dodge: 'Dodge', guard: 'Guard', lock: 'Lock on', gust: 'Palm Gust', whirl: 'Whirlwind Lift', interact: 'Interact', pause: 'Pause', guide: 'Show the way', aim: 'Aim', back: 'Back', stick: 'left thumb', drag: 'drag' };
+export const TNAME = { light: 'Attack', heavy: 'Heavy', jump: 'Jump', dodge: 'Dodge', guard: 'Guard', lock: 'Lock on', gust: 'Palm Gust', interact: 'Interact', pause: 'Pause', guide: 'Show the way', aim: 'Aim', back: 'Back', stick: 'left thumb', drag: 'drag' };
 // pad tokens used in prompts -> on-screen button
-export const TOUCHMAP = { '✕': 'jump', '○': 'dodge', '△': 'interact', '□': 'gust', L1: 'guard', R1: 'light', R2: 'heavy', L2: 'aim', R3: 'lock', L3: 'lock', OPTIONS: 'pause', BACK: 'back', LS: 'stick', RS: 'drag', DPAD: 'guide', 'L1+□': 'gust', 'L1+△': 'whirl' };   // L2+R2 -> aim + heavy
+export const TOUCHMAP = { '✕': 'jump', '○': 'dodge', '△': 'interact', '□': 'gust', L1: 'guard', R1: 'light', R2: 'heavy', L2: 'aim', R3: 'lock', L3: 'lock', OPTIONS: 'pause', BACK: 'back', LS: 'stick', RS: 'drag', DPAD: 'guide', 'L1+□': 'gust' };   // L2+R2 -> aim + heavy
 // a small painted disc with the button's icon (the stick and the drag get a word, as on the Controls page)
 export function tglyph(act) {
   const ic = TICON[act]; if (!ic) return `<span class="kb">${act}</span>`;

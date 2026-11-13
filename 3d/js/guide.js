@@ -29,7 +29,7 @@ export function currentGoal() {
     case 'terrace2': return { pos: V(0, 4, -64), text: 'Hold the terrace' };
     case 'bell':
       if (!F.attuned3) return { pos: W.shrines[2].pos, text: 'Attune at the shrine by the fallen bell stairs [△]', shrine: 2 };
-      if (!F.boss) return { pos: V(0, 8, -88), text: 'Ride the wind up the fallen stairs: [✕], then [L1+△] in the air' };
+      if (!F.boss) return { pos: V(0, 8, -88), text: 'Double jump up the fallen stairs: [✕], then [✕] again in the air' };
       return null;
   }
   return null;

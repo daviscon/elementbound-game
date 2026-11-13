@@ -18,9 +18,9 @@ const ROOT = ['Resume', 'Skills', 'Moves', 'Controls', 'Restart from checkpoint'
 // v4 note 27: both schemes side by side (pad glyphs and keyboard-and-mouse keys), whatever device is in use
 const PADI = (s) => s.split('+').map((k) => `<img class="g" src="assets/ui/cut/pad-${{ '✕': 'cross', '○': 'circle', '□': 'square', '△': 'triangle', OPTIONS: 'options', LS: 'ls', RS: 'rs', DPAD: 'dpad' }[k] || k}.png" alt="${k}">`).join('<span>+</span>');
 const KEYS = (s) => s.split(' / ').map((k) => /^(LMB|RMB|MMB)$/.test(k) ? `<span class="kb mouse m${k[0]}"><b></b></span>` : /^hold LMB$/.test(k) ? `<span class="kbw">hold</span><span class="kb mouse mL"><b></b></span>` : `<span class="kb">${k}</span>`).join(' ');
-const CONTROLS = [['Move', 'LS', 'W A S D'], ['Camera', 'RS', 'Mouse'], ['Light strike', 'R1', 'LMB'], ['Heavy strike', 'R2', 'hold LMB / Mouse 4 / F'], ['Jump · in the air + light: slam', '✕', 'Space'], ['Dodge roll / Wind-Step', '○', 'Shift'], ['Guard · parry', 'L1', 'Q'], ['Aim · fire', 'L2+R2', 'RMB / LMB'], ['Palm Gust', 'L1+□', '1 / Z'], ['Whirlwind Lift', 'L1+△', '2 / X'], ['Lock on · takedown', 'R3', 'MMB / Tab'], ['Interact', '△', 'E'], ['Show the way', 'DPAD', 'H'], ['Pause', 'OPTIONS', 'Esc']];
+const CONTROLS = [['Move', 'LS', 'W A S D'], ['Camera', 'RS', 'Mouse'], ['Light strike', 'R1', 'LMB'], ['Heavy strike', 'R2', 'hold LMB / Mouse 4 / F'], ['Jump · in the air + light: slam', '✕', 'Space'], ['Dodge roll / Wind-Step', '○', 'Shift'], ['Guard · parry', 'L1', 'Q'], ['Aim · fire', 'L2+R2', 'RMB / LMB'], ['Palm Gust', 'L1+□', '1 / Z'], ['Double Jump · jump again in the air', '✕', 'Space'], ['Lock on · takedown', 'R3', 'MMB / Tab'], ['Interact', '△', 'E'], ['Show the way', 'DPAD', 'H'], ['Pause', 'OPTIONS', 'Esc']];
 // v7 note 43: the third column, the on-screen touch button for each row ('' = not on touch)
-const TOUCHC = ['stick', 'drag', 'light', 'heavy', 'jump', 'dodge', 'guard', 'aim', 'gust', 'whirl', 'lock', 'interact', 'guide', 'pause'];
+const TOUCHC = ['stick', 'drag', 'light', 'heavy', 'jump', 'dodge', 'guard', 'aim', 'gust', 'jump', 'lock', 'interact', 'guide', 'pause'];
 
 export const Menu = {
   page: 'root', sel: 0, open: false, onRestart: null, onClose: null,
@@ -51,7 +51,7 @@ export const Menu = {
       const rows = [['Move / camera', '[LS] / [RS]'], ['Light strike (chain it)', '[R1]'], ['Heavy strike · after the 3rd light: sweep', '[R2]'], ['Jump', '[✕]'], ['Jump, then light strike: plunging slam', '[✕] [R1]'], ['Guard · tap just before a gold hit: parry', '[L1]'], ['Dodge roll', '[○]'], ['Palm Gust', '[L1+□]']];
       if (p.unlocked.shot) rows.push(['Aimed Gust', '[L2+R2]']);
       if (p.unlocked.step) rows.push(['Wind-Step (through red attacks)', '[○]']);
-      if (p.unlocked.whirl) rows.push(['Whirlwind Lift (in the air: lifts the jump)', '[L1+△]']);
+      if (p.unlocked.whirl) rows.push(['Double Jump · jump again in the air', '[✕] [✕]']);
       rows.push(['Lock on · takedown on a stunned foe', '[R3]'], ['Interact / talk', '[△]']);
       html = rows.map(([a, b]) => `<div class="mv"><span>${a}</span><span>${G_(b)}</span></div>`).join('');
       html += `<div id="menu-desc">Gold signal: parry or block it. Red signal: dodge it.</div>`;

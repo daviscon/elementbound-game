@@ -24,7 +24,13 @@ export const SLING = { off: [-0.02, -0.08, -0.2], dir: [-0.76, 0.64, 0.12] };   
 export const GRIP = { default: [-0.81, -0.45, -0.39], sHeavy: [0.70, -0.09, -0.71], sParry: [-0.98, 0.09, 0.16], sWalk: [0.56, 0.32, 0.77], run: [0.56, 0.32, 0.77], jump: [0.56, 0.32, 0.77], wCombo: [0, -1, 0], lSlash: [0, -1, 0] };   // v6: the one-handed grip combo, the pole along the forearm (tools/wstrip.mjs)
 // where the right hand holds the pole, as a fraction of its length from the foot cap
 const HOLD = { default: 0.3, sParry: 0.42, sStance: 0.34 };
+const LOCO = /^(sWalk|sRun|walk|run|jump)$/;
 const HOLD_FLIP = { default: 0.36, sParry: 0.48, sStance: 0.42, run: 0.42, sRun: 0.42, jump: 0.45 };   // v4: the ring head ~1.15 m beyond the right hand when striking
+// v8: the Captain's glaive: the right hand nearer the pommel (the blade ~1.5 m beyond it), so the blade is the long,
+// fast end of every swing (tools/glaive-check.mjs)
+const HOLD_GLAIVE = { default: 0.28 };
+// v8: per-weapon, per-clip grip axes where the shared staff axis lets the butt out-swing the head (tools/glaive-check.mjs --tune)
+export const GRIP_KIND = { glaive: {}, staff: { sCombo3: [-0.777, -0.483, -0.405], sWalk: [0.671, 0.279, 0.687] }, spear: { spearAtk: [0.113, -0.747, 0.655], lSlash: [0.099, -0.99, -0.103] } };
 
 export class Staff {
   constructor(char, scene, o = {}) {
@@ -36,6 +42,11 @@ export class Staff {
     this.dir = new THREE.Vector3(0, 1, 0); this.pos = new THREE.Vector3(); this.quat = new THREE.Quaternion();
     this.hold = 0.3; this.ikW = 0; this.tipPos = new THREE.Vector3(); this.prevTip = new THREE.Vector3(); this.tipVel = new THREE.Vector3();
     this.trail = null; this.visible = true; this.kind = o.kind || 'staff';
+    // v8: how much pole (fraction of its length) is left past the lower hand when both hands are on it. The glaive
+    // keeps its lower hand near the pommel so the blade is the long, fast end of every two-handed swing.
+    this.holdPad = o.holdPad ?? (this.kind === 'glaive' ? 0.05 : 0.12);
+    this.dynLo = 0.26; this.w2Rate = 4;
+    this.polearm = this.kind === 'glaive';   // v8: eased grip blend and hold (Joon's staff and the spears keep theirs)
     this.flip = !/[?&]noflip/.test(location.search);   // v4 note 18 (v5 note 30: the glaive too, so its blade leads every swing)
     this.buildFallback();
     this.grips = { R: new GripCap(scene, 'Right'), L: new GripCap(scene, 'Left') };   // v6: fists on the shaft
@@ -77,7 +88,15 @@ export class Staff {
     const holder = new THREE.Group(); holder.add(obj); obj.position.sub(ctr);
     if (size.x > size.y && size.x > size.z) holder.rotation.z = Math.PI / 2; else if (size.z > size.y) holder.rotation.x = Math.PI / 2;
     const long = Math.max(size.x, size.y, size.z); holder.scale.setScalar(this.len / long);
-    if (this.modelFlip) { const outer = new THREE.Group(); outer.add(holder); outer.rotation.z = Math.PI; this.model0 = holder; holder.parent.updateMatrixWorld(); return this._setHolder(outer, obj); }
+    // v8 (the upside-down glaive): every pole's HEAD (the glaive's blade, the spear's point, the staff's brass ring)
+    // must sit at staff +Y (frac 1), the end the grips, the upright hold and the swing lead are built around. The
+    // head is the end whose last 15% is the wider (tools/glaive-check.mjs measures the same). The glaive GLB has
+    // its blade at -X, which the long-axis turn put at -Y: every clip held it blade down and swung it butt first.
+    { const ax = size.x > size.y && size.x > size.z ? 0 : size.z > size.y ? 2 : 1, sp = [0, 0], v = new THREE.Vector3();
+      obj.traverse((o) => { if (o.isMesh && !o.userData.isOutline) { const a = o.geometry.attributes.position; for (let i = 0; i < a.count; i++) { v.fromBufferAttribute(a, i).applyMatrix4(o.matrixWorld).sub(ctr); const c = [v.x, v.y, v.z], along = c[ax]; if (Math.abs(along) < long * 0.35) continue; c[ax] = 0; const r = Math.hypot(c[0], c[1], c[2]); if (along > 0) sp[1] = Math.max(sp[1], r); else sp[0] = Math.max(sp[0], r); } } });
+      const head = new THREE.Vector3().setComponent(ax, sp[1] >= sp[0] ? 1 : -1).applyEuler(holder.rotation);
+      this.headDown = head.y < 0; }
+    if (this.modelFlip || this.headDown) { const outer = new THREE.Group(); outer.add(holder); outer.rotation.z = Math.PI; this.model0 = holder; holder.parent.updateMatrixWorld(); return this._setHolder(outer, obj); }
     return this._setHolder(holder, obj);
   }
   _setHolder(holder, obj) {
@@ -116,7 +135,7 @@ export class Staff {
     if (!be || !be.bones.RightHand) return;
     ch.root.updateMatrixWorld(true);
     const state = ch.state;
-    let pos = _a, dir = _b, hold = this.flip ? (HOLD_FLIP[state] ?? HOLD_FLIP.default) : (HOLD[state] ?? HOLD.default);
+    let pos = _a, dir = _b, hold = this.flip ? ((this.kind === 'glaive' ? HOLD_GLAIVE[state] ?? HOLD_GLAIVE.default : null) ?? HOLD_FLIP[state] ?? HOLD_FLIP.default) : (HOLD[state] ?? HOLD.default);
     this.ikW = 0;
     if (this.mode === 'planted' && this.plantPos) {
       // v3: stood upright in the ground (the attunement ceremony), rings at the top, a slight lean
@@ -148,23 +167,31 @@ export class Staff {
       const R = ch.socket('handR', pos);
       const L = ch.socket('handL', _c);
       const rb = be.bones.RightHand; rb.getWorldQuaternion(_q);
-      const g = GRIP[state] || GRIP.default;
+      const g = (GRIP_KIND[this.kind] && GRIP_KIND[this.kind][state]) || GRIP[state] || GRIP.default;
       const fixed = _d.set(g[0], g[1], g[2]).normalize().applyQuaternion(_q);
       // v4 note 18: the clips are two-handed axe swings, the axe head beyond the RIGHT hand and the left
       // hand lower on the haft. So the brass ring head points from the left hand THROUGH the right hand and
       // leads every swing; the foot cap trails past the left hand. (v3 had it the other way round.)
       // (the one-handed carry on the run and in the air keeps the ring head up, so it is not flipped)
-      const flip = this.flip && this.mode !== 'carry', F = flip ? -1 : 1;
+      // v8: nor is it on the staff walk / run with the pole in both hands (it pointed the ring head down and back
+      // at the ground on every combat run; tools/glaive-check.mjs)
+      const flip = this.flip && this.mode !== 'carry' && !LOCO.test(state), F = flip ? -1 : 1;
+      if (this._flipEff !== undefined && this._flipEff !== flip && this.blendT >= 1) { this.from = { pos: this.group.position.clone(), quat: this.group.quaternion.clone(), hold: this.hold }; this.blendT = 0; this.blendDur = 0.16; }   // v8: turned over blended, never popped
+      this._flipEff = flip;
       if (flip) fixed.negate();
       if (!flip) hold = HOLD[state] ?? HOLD.default;
       if (this.mode === 'carry') dir.copy(fixed);
       else {
         const apart = L.distanceTo(R);
-        const w2 = ss(0.26, 0.38, apart) * (1 - ss(0.95, 1.1, apart)) * (this.noDynamic ? 0 : 1);
+        let w2 = ss(this.dynLo, this.dynLo + 0.12, apart) * (1 - ss(0.95, 1.1, apart)) * (this.noDynamic ? 0 : 1);
+        // v8: the glaive eases between the fixed grip axis and the two-hand axis (~0.25 s) instead of snapping when the
+        // left hand lets go or takes hold again; a snap whips the pommel round faster than the blade
+        if (this.polearm) { this._w2 = this._w2 === undefined || this.lastMode !== 'hands' ? w2 : this._w2 + (w2 - this._w2) * (1 - Math.exp(-this.w2Rate * dt)); w2 = this._w2; }
         const dyn = L.clone().sub(R).normalize().multiplyScalar(F);
         if (dyn.dot(fixed) < -0.2) dyn.copy(fixed);       // left hand behind the right: not on this pole
         dir.copy(fixed).lerp(dyn, w2).normalize();
-        if (w2 > 0.5) hold = flip ? Math.max(hold, Math.min(0.72, apart / this.len + 0.12)) : Math.min(hold, 0.9 - apart / this.len);
+        if (this.polearm && flip) hold += (Math.max(hold, Math.min(0.72, apart / this.len + this.holdPad)) - hold) * w2;   // v8: blended, so the pole never slides up the hand when the second hand lets go
+        else if (w2 > 0.5) hold = flip ? Math.max(hold, Math.min(0.72, apart / this.len + this.holdPad)) : Math.min(hold, 0.9 - apart / this.len);
         this._needIK = w2 < 0.5;
       }
     }

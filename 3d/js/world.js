@@ -495,7 +495,7 @@ export function buildWorld(scene) {
   World.spots.terrace = new THREE.Vector3(0, 4, -53);
 
   // F. stairs to the bell terrace. v3: the lower half has fallen (a 2.3 m face at z -78): jump [✕], then the
-  // Whirlwind Lift [L1+△] in the air carries Joon up. The floor of the stairwell is terrace level.
+  // Double Jump [✕ ✕] (shrine 3) carries Joon up. The floor of the stairwell is terrace level.
   slab(-4, 4, -78, -74, 4, { bottom: 2 });
   wall(-4, 4, -78.4, -78, 4, 6.3, stoneMat, { walkTop: true });
   ramp(-4, 4, -82, -78.4, 6.3, 8, 5);
@@ -698,7 +698,7 @@ export function buildV2() {
   // shrines (also checkpoints): the stairs, the terrace, before the bell terrace
   V2.shrines.push({ pos: new THREE.Vector3(-7.2, 0, -32.5), ...shrineMesh(new THREE.Vector3(-7.2, 0, -32.5), 0.9) });   // v3: off the lantern, open ground round it
   V2.shrines.push({ pos: new THREE.Vector3(9.5, 4, -53.5), ...shrineMesh(new THREE.Vector3(9.5, 4, -53.5), -0.8) });
-  // v3: shrine 3 stands on the terrace by the fallen bell stairs (the whirlwind it gives is how you climb them)
+  // v3: shrine 3 stands on the terrace by the fallen bell stairs (the double jump it gives is how you climb them)
   V2.shrines.push({ pos: new THREE.Vector3(-7, 4, -72.3), ...shrineMesh(new THREE.Vector3(-7, 4, -72.3), 0.5) });
   World.surfaces.push({ type: 'box', x0: -4, x1: 4.6, z0: -84.5, z1: -81.5, y: 8 });
   // the chime balcony: a side path off the terrace's east edge that loops back

@@ -66,7 +66,9 @@ img { -webkit-user-drag: none; }
 .mk .stun .bg { position: absolute; inset: 0; border-radius: 4px; background: rgba(29,22,32,.55); }
 .mk .stun .fill { position: absolute; left: 0; top: 0; bottom: 0; overflow: hidden; }
 .mk .stun .fill img { width: 64px; height: 7px; display: block; filter: sepia(1) saturate(3) hue-rotate(5deg) brightness(1.1); }
-.mk .r3 { height: 34px; margin-top: 2px; animation: bob .7s ease-in-out infinite; }
+.mk .r3 { display: flex; align-items: center; gap: 4px; height: 34px; margin-top: 2px; animation: bob .7s ease-in-out infinite; white-space: nowrap; }
+.mk .r3.hidden { display: none; }
+.mk .r3 img.g { height: 34px; }   /* v8 note 46: a live glyph, not a fixed pad image */
 @keyframes bob { 50% { transform: translateY(-4px); } }
 
 #threats { position: absolute; inset: 0; }
@@ -201,7 +203,7 @@ html, body { touch-action: none; overscroll-behavior: none; -webkit-user-select:
 .tb.sm.down { transform: scale(.92); }
 .tb.air { width: calc(50 * var(--u)); height: calc(50 * var(--u)); border-width: calc(2.5 * var(--u)); }
 .tb img { position: absolute; inset: -6%; width: 112%; height: 112%; pointer-events: none; }
-.tb[data-act="gust"], .tb[data-act="whirl"] { background: none; border: 0; box-shadow: none; }
+.tb[data-act="gust"] { background: none; border: 0; box-shadow: none; }
 .tb .cd { position: absolute; inset: 9%; border-radius: 50%; background: conic-gradient(rgba(29,22,32,.72) calc(var(--k, 0) * 1turn), transparent 0); pointer-events: none; }
 .tb.gone { display: none; }
 .tb.hot { animation: tbHot 1s ease-in-out infinite; }
@@ -217,7 +219,6 @@ html, body { touch-action: none; overscroll-behavior: none; -webkit-user-select:
 #t-pad [data-act="interact"] { --x: 22; --y: -176; }
 #t-pad [data-act="lock"] { --x: -38; --y: -176; }
 #t-pad [data-act="gust"] { --x: -98; --y: -176; }
-#t-pad [data-act="whirl"] { --x: -158; --y: -176; }
 #t-top { position: absolute; right: calc(var(--sr) + 12 * var(--u)); top: calc(var(--st) + 10 * var(--u)); display: flex; gap: calc(10 * var(--u)); }
 /* the floating stick: a faint resting ring bottom-left, it jumps to wherever the thumb lands */
 #t-stick { position: absolute; left: calc(var(--sl) + 96 * var(--u)); top: calc(100% - var(--sb) - 92 * var(--u)); width: 0; height: 0; opacity: .3; transition: opacity .15s; }
@@ -268,3 +269,6 @@ body.touch #goal { right: auto; left: 50%; transform: translateX(-50%); top: cal
 body.touch #goal::before { margin: 0 auto 4px; width: 40%; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 body.touch #goal.lesson { font-size: 17px; max-width: 52vw; }
 body.touch #goal.lesson img.g, body.touch #goal img.g { height: 22px; vertical-align: -6px; }
+
+/* v8: the release version label on the title */
+#title .ver { position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); font: 600 13px/1 Georgia, serif; letter-spacing: .12em; color: rgba(246, 232, 205, .72); text-shadow: 0 1px 2px rgba(0,0,0,.6); pointer-events: none; }

@@ -31,8 +31,8 @@ const NAMES = { reed: 'The Rime Warden', colossus: 'The Quarry Colossus', overse
 const SUBS = { reed: 'Ice guardian of the frozen sluice', colossus: 'Trial guardian of the deep pit', overseer: 'Master of the furnace yard', captain: 'Captain of the Brass Gate' };
 const STATS = {
   // v4: health up about half so the later phases are actually seen (were 36 / 56 / 58 / 48)
-  reed: { w: 150, h: 290, hp: 54 }, colossus: { w: 220, h: 320, hp: 84 },
-  overseer: { w: 170, h: 290, hp: 80 }, captain: { w: 90, h: 225, hp: 80 },
+  reed: { w: 150, h: 290, hp: 54 }, colossus: { w: 220, h: 320, hp: 120 },   // v16 (note 75, bot-tuned): Colossus 84 -> 120, Overseer 80 -> 46, Captain 80 -> 46
+  overseer: { w: 170, h: 290, hp: 46 }, captain: { w: 90, h: 225, hp: 46 },
 };
 const CYCLE = {
   reed: ['slam', 'pillars', 'sweep', 'slam', 'icicles'],
@@ -43,7 +43,11 @@ const CYCLE = {
 };
 const PLACEHOLDER = { reed: 'tide', colossus: 'warden', overseer: 'kiln' };
 // Health fractions where each boss changes phase (2 or 3 phases each).
-const PHASES = { reed: [0.5], colossus: [0.6, 0.3], overseer: [0.55, 0.25], captain: [0.5, 0.25] };
+// v16 (Connor's note 75: "give them the full Rime Warden treatment"): two phases each, the line at half health. The
+// Captain keeps his third (Kesh's return takes his fire, a story beat, not a harder fight).
+const PHASES = { reed: [0.5], colossus: [0.5], overseer: [0.5], captain: [0.5, 0.25] };
+// how much faster phase two comes (timings are multiplied by this); tuned on the fight bots
+export const PHASE2_K = { reed: 0.635, colossus: 0.55, overseer: 0.92, captain: 0.8 };
 // What each phase adds to the cycle.
 export const PHASE_CYCLE = {
   // v12 (note 39): the Rime Warden. Phase one: the ice slam (spikes race along the floor), the three rising pillars, the
@@ -53,9 +57,11 @@ export const PHASE_CYCLE = {
   // race along the floor) and the crystal rush, so it can be learned. Phase two adds the third, the ground pillars, and
   // everything comes faster (k 0.62). The icicles are the phase change itself: the roar brings them down on the arena.
   reed: [['slam', 'sweep', 'slam', 'sweep'], ['pillars', 'slam', 'sweep', 'pillars', 'sweep', 'slam']],
-  colossus: [['walk', 'slam', 'walk', 'toss'], ['walk', 'slam', 'toss', 'quake'], ['slam', 'quake', 'walk', 'toss', 'slam']],
-  overseer: [['cone', 'punch', 'fan'], ['cone', 'punch', 'fan', 'vents'], ['cone', 'vents', 'punch', 'fan', 'cone']],
-  captain: [['combo', 'volley', 'combo', 'leap'], ['combo', 'dash', 'volley', 'combo', 'dash', 'leap'], ['combo', 'leap', 'combo', 'combo', 'leap']],
+  // v16 (Connor's note 75): the same shape for the other three. Phase one is two moves, learned in order; phase two adds
+  // the rest and everything comes faster (PHASE2_K), its blows costing 2 hearts (player.js)
+  colossus: [['walk', 'slam', 'walk', 'toss'], ['walk', 'slam', 'quake', 'toss', 'walk', 'quake', 'slam']],
+  overseer: [['cone', 'punch', 'cone', 'punch'], ['cone', 'fan', 'punch', 'vents', 'fan', 'cone', 'vents', 'punch']],
+  captain: [['combo', 'volley', 'combo', 'volley'], ['combo', 'dash', 'leap', 'volley', 'dash', 'combo', 'leap'], ['combo', 'leap', 'combo', 'combo', 'leap']],
 };
 
 // An ambush (soldiers only) is remembered per room; a boss by its kind.
@@ -212,8 +218,10 @@ export function bossHit(e, dmg, o = {}) {
   const th = e.phases[e.phase - 1];
   if (th != null) {
     const line = e.maxHp * th, list = PHASE_CYCLE[e.kind][Math.min(e.phase, PHASE_CYCLE[e.kind].length) - 1];
-    const floor = e.cycle < list.length * 2 ? line + 0.5 : line;
-    if (e.hp - d < floor) d = Math.max(e.hp > floor ? e.hp - floor : 0, e.cycle < list.length * 2 ? 0 : e.hp - line);
+    // v16 (note 75): the Warden shows two cycles before his line; the others, whose phase lists are longer, one
+    const need = list.length * (e.kind === 'reed' ? 2 : 1);
+    const floor = e.cycle < need ? line + 0.5 : line;
+    if (e.hp - d < floor) d = Math.max(e.hp > floor ? e.hp - floor : 0, e.cycle < need ? 0 : e.hp - line);
   }
   if (d > 0) {
     e.hurtA = 0.3;
@@ -229,7 +237,7 @@ export function bossHit(e, dmg, o = {}) {
 function bossDamage(e, dmg, o) {
   if (e.kind === 'colossus') {
     if (o.slam && e.state !== 'stagger' && e.staggerLock <= 0) {
-      go(e, 'stagger'); e.vx = 0; e.staggerDur = 1.8; e.staggerLock = 6; bossWisps(e, 3);   // v11: a stagger sheds three wisps
+      go(e, 'stagger'); e.vx = 0; e.staggerDur = 1.5; e.staggerLock = e.phase >= 2 ? 9 : 7; bossWisps(e, 3);   // v11: a stagger sheds three wisps
       Sound.sfx('colossus-stagger');   // v9 (review 9 sound 2): its own crack and lurch, not the roar sped up
       shake(22); hitstop(0.12); impact(e.x, e.y - e.h * 0.5, { force: true });   // v11 (note 15): no 'Staggered!' word
       return dmg * 1.5;
@@ -354,7 +362,7 @@ function stepSound(e, fps, name, o = {}) {
 function rest(e, dur) { e.recDur = dur; go(e, 'rec'); }
 function crush(pl) { pl.t = pl.life; }
 function shock(e, half, color) {
-  G.hurts.push({ x: e.x - half, y: e.y - 70, w: half * 2, h: 70, t: 0.22, delay: 0, dmg: 2, kind: 'shock', color, fromX: e.x });
+  G.hurts.push({ x: e.x - half, y: e.y - 70, w: half * 2, h: 70, t: 0.22, delay: 0, dmg: 1, kind: 'shock', color, fromX: e.x });   // v16 (note 75): every guardian blow is 1 in phase one; phase two doubles it (player.js)
   shake(14);
   addFx('dust', e.x, e.y + 8, { dur: 0.45, size: half * 2.2, anchor: 'bottom' });
   burst(e.x, e.y, 14, { color: [G.room.pal.top, '#ffffff'], rx: half * 0.6, min: 100, max: 420, angle: -Math.PI / 2, spread: 1.2, life: 0.5, size: 14 });
@@ -536,7 +544,7 @@ const BRAIN = {
         e.vx = approach(e.vx, 0, 2000 * dt); e.windDur = 0.7 * k;
         if (e.t > e.windDur) {
           const n = e.enraged ? 3 : 2;
-          for (let i = 0; i < n; i++) spawnShot({ kind: 'boulder', x: e.x + e.face * 70, y: e.y - 280, vx: e.face * (330 + i * 240), vy: -760, grav: 2200, r: 36, dmg: 2, bounce: 2, life: 5 });
+          for (let i = 0; i < n; i++) spawnShot({ kind: 'boulder', x: e.x + e.face * 70, y: e.y - 280, vx: e.face * (330 + i * 240), vy: -760, grav: 2200, r: 36, dmg: 1, bounce: 2, life: 5 });
           Sound.sfx('boulder-throw');
           go(e, 'toss');
         }
@@ -581,8 +589,8 @@ const BRAIN = {
         // from phase two the jet sweeps upward: get under it, don't jump it
         const lift = e.phase >= 2 ? Math.min(1, e.t / 0.9) * 200 : 0;
         if (Math.floor(e.t / 0.12) !== Math.floor((e.t - dt) / 0.12) && e.t < 0.9) {
-          G.hurts.push({ x: e.face > 0 ? e.x + 40 : e.x - 40 - len, y: e.y - 230 - lift, w: len, h: 170, t: 0.13, delay: 0, dmg: 2, kind: 'cone', fromX: e.x });
-          groundFire(e.x + e.face * (40 + len * 0.75), e.y - 20, 240, 3.0);   // v10 (note 14): the breath leaves the floor burning, like the Ember Slingers' flasks
+          G.hurts.push({ x: e.face > 0 ? e.x + 40 : e.x - 40 - len, y: e.y - 230 - lift, w: len, h: 170, t: 0.13, delay: 0, dmg: 1, kind: 'cone', fromX: e.x });   // v16: 1 in phase one; phase two doubles it
+          groundFire(e.x + e.face * (40 + len * 0.75), e.y - 20, 150, 2.4);   // v16 (note 75): narrow enough to jump into the vent window   // v10 (note 14): the breath leaves the floor burning, like the Ember Slingers' flasks
         }
         if (Math.random() < 0.9) burst(e.x + e.face * rnd(80, len), e.y - rnd(110, 210), 1, { color: ['#ffd36b', '#f0742a', '#ffffff'], min: 20, max: 120, life: 0.35, size: 16, grav: -200 });
         if (e.t > 1.0) {
@@ -603,7 +611,7 @@ const BRAIN = {
       case 'punch':
         e.vx = e.face * (e.enraged ? 1150 : 1000);
         if (Math.random() < 0.6) burst(e.x - e.face * 60, e.y - 60, 1, { color: ['#ffd36b', '#f0742a'], min: 20, max: 140, life: 0.4, size: 12, grav: -200 });
-        G.hurts.push({ x: e.face > 0 ? e.x + 20 : e.x - 140, y: e.y - 220, w: 120, h: 160, t: dt * 1.5, delay: 0, dmg: 2, kind: 'melee', fromX: e.x });
+        G.hurts.push({ x: e.face > 0 ? e.x + 20 : e.x - 140, y: e.y - 220, w: 120, h: 160, t: dt * 1.5, delay: 0, dmg: 1, kind: 'melee', fromX: e.x });   // v16 (note 75): 1 in phase one (phase two doubles every blow)
         if (e.t > 0.62 || e.hitX === e.face) { e.vx = 0; if (e.hitX) { shake(12); Sound.sfx('punch-hit', { rate: 0.6 }); } rest(e, 0.9); }
         break;
       case 'vents_wind': {   // stamps: the floor grates blow fire in turn
@@ -644,8 +652,8 @@ const BRAIN = {
         e.windDur = (e.hits === 0 ? 0.4 : 0.22) * k;
         e.vx = approach(e.vx, 0, 3000 * dt);
         if (e.t > e.windDur) {
-          go(e, 'combo_strike'); e.vx = e.face * 480;
-          G.hurts.push({ x: e.face > 0 ? e.x : e.x - 210, y: e.y - 200, w: 210, h: 190, t: 0.14, delay: 0, dmg: 2, kind: 'melee', fromX: e.x });
+          go(e, 'combo_strike'); e.vx = e.face * (e.enraged ? 480 : 380);   // v16: a shorter step in phase one
+          G.hurts.push({ x: e.face > 0 ? e.x : e.x - 210, y: e.y - 200, w: 210, h: 190, t: 0.14, delay: 0, dmg: 1, kind: 'melee', fromX: e.x });
           Sound.sfx('captain-slash', { rate: 1 + e.hits * 0.06 });
           burst(e.x + e.face * 110, e.y - 120, 5, { color: ['#ffd36b', '#f0742a'], min: 60, max: 260, life: 0.3, size: 12 });
         }
@@ -685,7 +693,7 @@ const BRAIN = {
       case 'dash':
         e.vx = e.face * 1500;
         // v9 (review 9 #1): one blow per dash (Joon's 1.1 s of safety does the rest), and the melee box stops once it lands
-        if (!e.dashHit) G.hurts.push({ x: e.x - 60, y: e.y - 200, w: 120, h: 190, t: dt * 1.5, delay: 0, dmg: 2, kind: 'melee', fromX: e.x - e.face * 40, onHit: () => { e.dashHit = true; } });
+        if (!e.dashHit) G.hurts.push({ x: e.x - 60, y: e.y - 200, w: 120, h: 190, t: dt * 1.5, delay: 0, dmg: 1, kind: 'melee', fromX: e.x - e.face * 40, onHit: () => { e.dashHit = true; } });
         // fire left burning on the floor behind it
         if (Math.floor(e.t / 0.06) !== Math.floor((e.t - dt) / 0.06)) G.hurts.push({ x: e.x - 50, y: e.y - 90, w: 100, h: 90, t: 1.4, delay: 0.12, dmg: 1, kind: 'flame', fromX: e.x });
         // v9 (review 9 #1): the dash always ends: past its mark, at a wall, or after 1.3 s (a full crossing takes 1.2 s)
@@ -694,11 +702,36 @@ const BRAIN = {
     }
   },
 };
+// v16 (Connor's note 75): each guardian's phase change is a real beat like the Warden's icicles: it roars on its own
+// cast sheet for 1.7 s while the arena answers, with every danger marked before it lands.
+//   Colossus: the pit shakes, rocks fall in two waves on marked spots (and the rubble steps fall, dropRubble).
+//   Overseer: every floor grate blows, left to right, one after another (Every vent opens).
+//   Captain: he throws his fire up and it comes down as two fans of fireballs at Joon.
+function phaseBeat(e) {
+  const room = G.room, { lo, hi } = arena(), y = room.def.boss.y;
+  Sound.sfx(e.kind + '-phase', { delay: 0.3 });   // v16: the beat's own sound (rocks loosening, the vents rolling open, the fire thrown up)
+  if (e.kind === 'colossus') {
+    Sound.rumble(0.9, 0.8, 900);
+    for (let i = 0; i < 7; i++) {
+      const x = lo + 100 + (hi - lo - 200) * (i + 0.5) / 7 + rnd(-30, 30), delay = 0.6 + (i % 2) * 0.5 + rnd(0, 0.1);
+      G.hurts.push({ x: x - 50, y: y - 30, w: 100, h: 30, t: 0.01, delay: delay - 0.05, dmg: 0, kind: 'mark' });
+      later(delay - 0.5, () => { if (!e.dead && G.room === room) spawnShot({ kind: 'boulder', x, y: G.cam.y - 60, vx: 0, vy: 700, grav: 2200, r: 30, dmg: 1, bounce: 0, life: 3, shadow: { x, y } }); });
+    }
+  }
+  if (e.kind === 'overseer') {
+    const n = 6;
+    for (let i = 0; i < n; i++) { const x = gratesX(i, n, lo, hi); G.hurts.push({ x: x - 70, y: y - 220, w: 140, h: 220, t: 0.45, delay: 0.55 + i * 0.16, dmg: 1, kind: 'flame', vent: true, fromX: x, onStart: () => Sound.sfx('floor-vent-fire', { gap: 0.08 }) }); }
+    shake(10);
+  }
+  if (e.kind === 'captain') {
+    for (const [d, n] of [[0.7, 5], [1.25, 4]]) later(d, () => { if (e.dead || G.room !== room) return; for (let i = 0; i < n; i++) fireAt(e, G.player, 560, (i - (n - 1) / 2) * 0.3); Sound.sfx('enemy-fireball'); shake(4); });
+  }
+}
 // Between phases: the boss roars, can't be hurt, then comes back with its new moves.
 function phaseState(e, dt) {
   e.vx = approach(e.vx, 0, 3000 * dt);
   if (Math.random() < 0.8) burst(e.x + rnd(-80, 80), e.y - rnd(0, e.h), 1, { color: ['#ffffff', G.room.reg.color, '#ffd36b'], min: 40, max: 260, life: 0.6, size: 14, grav: -300 });
-  if (e.t > (e.kind === 'reed' ? 1.7 : 1.4)) { e.invuln = false; go(e, 'idle'); }
+  if (e.t > 1.7) { e.invuln = false; go(e, 'idle'); }   // v16: every guardian's phase change is the Warden's 1.7 s beat
 }
 
 export function updateBoss(e, dt) {
@@ -745,6 +778,7 @@ export function updateBoss(e, dt) {
     if (e.kind === 'colossus') Sound.sfx('colossus-roar', { rate: 0.9 });
     if (e.kind === 'overseer') Sound.sfx('overseer-roar', { rate: 1.05 });
     if (e.kind === 'captain') Sound.sfx('captain-intro', { rate: 1.1, vol: 0.8 });
+    if (e.phase === 2) phaseBeat(e);
     if (e.kind === 'captain' && e.phase === 3) {
       // Kesh comes back and takes the Captain's fire: no more fire dash or volleys, but faster blades
       later(0.6, () => Flow.openTalk('keshReturns'));
@@ -758,7 +792,7 @@ export function updateBoss(e, dt) {
     moveBody(e, dt, { noOneways: true });
     return;
   }
-  const k = e.enraged ? (e.kind === 'reed' ? 0.635 : 0.75) : 1;   // v15 (note 68): the Warden's second phase comes much faster
+  const k = e.enraged ? (e.phase >= 3 ? 1 : PHASE2_K[e.kind] || 0.75) : 1;   // v15/v16 (notes 68, 75): phase two comes much faster
   // the entrance is watched: the boss waits until its name card has had its moment
   if (e.state === 'intro') { e.face = sign(p.x - e.x); if (e.carded && e.t > 0.3 && !(G.bossCard && G.bossCard.t < 2.4)) { e.invuln = false; go(e, 'idle'); } }
   else if (e.state === 'rec') { e.vx = approach(e.vx, 0, 2600 * dt); if (e.t > e.recDur * k) go(e, 'idle'); }
@@ -910,6 +944,17 @@ function bossFrame(e) {
     const mv = e.state.replace('_wind', ''), cs = CAST[mv];
     if (cs && has(cs)) return [cs, e.state.endsWith('_wind') ? Math.min(4, Math.floor((e.t / (e.windDur || 0.6)) * 5)) : Math.min(7, 5 + Math.floor(e.t * 8))];
   }
+  // v16 (Connor's note 75): the Warden treatment for the Colossus and the Overseer: each move plays its OWN cast sheet as
+  // its tell (frames 0-4 across the wind-up, 5-7 on the release), the pogo answer its antiair sheet, the phase roar a
+  // cast sheet, whenever those sheets exist (boss-<name>-cast-<move>.png, -antiair.png)
+  if ((e.kind === 'colossus' || e.kind === 'overseer') && !e.dead) {
+    const ov = aaPose(e); if (ov) return [ov[0].split('.')[1], ov[1]];
+    const CAST = e.kind === 'colossus' ? { slam: 'castslam', toss: 'casttoss', quake: 'castquake' } : { cone: 'castcone', punch: 'castpunch', fan: 'castfan', vents: 'castvents' };
+    const roar = e.kind === 'colossus' ? 'castquake' : 'castvents';
+    if (e.state === 'phase' && has(roar)) return [roar, Math.min(7, Math.floor(e.t / 1.2 * 8))];
+    const mv = e.state.replace('_wind', ''), cs = CAST[mv === 'fan' && e.last === 'vents' ? 'vents' : mv];
+    if (cs && has(cs) && (e.state.endsWith('_wind') || ['slam', 'toss', 'cone', 'punch', 'fan'].includes(e.state))) return [cs, e.state.endsWith('_wind') ? Math.min(4, Math.floor((e.t / (e.windDur || 0.6)) * 5)) : Math.min(7, 5 + Math.floor(e.t * 8))];
+  }
   // painted defeat and hurt sheets when they exist (cycle 4 requests)
   if (e.dead && e.deadT < (HOLD[e.kind] || 0) && has('hurt')) return ['hurt', 1];
   if (e.dead && has('defeat')) return ['defeat', defeatFrame(e)];
@@ -1001,6 +1046,15 @@ function captain2Frame(e) {
   const K = 'captain2.', idle = [K + 'idle', Math.floor(e.animT * 7) % 8];
   if (e.dead) return Assets.has(K + 'defeat') ? [K + 'defeat', defeatFrame(e)] : [K + 'attack', 6];
   if (e.hurtA > 0.15 && Assets.has(K + 'hurt') && ['approach', 'rec'].includes(e.state)) return [K + 'hurt', Math.min(3, Math.floor((0.3 - e.hurtA) / 0.05))];
+  // v16 (Connor's note 75): his own tell per move (captain-redesign-cast-<move>.png), the antiair kick, the phase roar
+  { const ov = aaPose(e); if (ov) return ov; }
+  const CAST = { combo: 'castcombo', volley: 'castvolley', leap: 'castleap', dash: 'castdash' }, mv = e.state.replace(/_wind|_strike/, ''), cs = CAST[mv];
+  if (e.state === 'phase' && Assets.has(K + 'castleap')) return [K + 'castleap', Math.min(4, Math.floor(e.t / 1.2 * 5))];
+  if (cs && Assets.has(K + cs)) {
+    const wind = e.state.endsWith('_wind'), wd = e.windDur || 0.5;
+    if (mv === 'combo') return [K + cs, wind && e.hits === 0 ? Math.min(4, Math.floor(e.t / wd * 5)) : 5 + Math.min(2, e.hits - (wind ? 1 : 0))];
+    if (wind || e.state === mv) return [K + cs, wind ? Math.min(4, Math.floor(e.t / wd * 5)) : Math.min(7, 5 + Math.floor(e.t * 8))];
+  }
   switch (e.state) {
     case 'phase': return [K + 'attack', 5];
     case 'approach': case 'enter': return Math.abs(e.vx) > 30 ? [K + 'walk', Math.floor(e.animT * 9) % 8] : idle;
@@ -1012,7 +1066,8 @@ function captain2Frame(e) {
     case 'leap': return [K + 'attack', 5];
     case 'dash_wind': return [K + 'dash', 1 + Math.min(1, Math.floor(e.t * 4))];
     case 'dash': return [K + 'dash', 3 + (Math.floor(e.t * 12) % 3)];
-    case 'rec': return e.t < 0.2 ? [K + (e.last === 'dash' ? 'dash' : 'attack'), e.last === 'dash' ? 6 : 6] : e.t < 0.35 && e.last === 'dash' ? [K + 'dash', 7] : idle;
+    case 'rec': if (e.last === 'dash' && Assets.has(K + 'castdash') && e.t < 0.35) return [K + 'castdash', 7];   // v16: the glaive dash's own last frame, not the old lantern-pole sheet
+      return e.t < 0.2 ? [K + (e.last === 'dash' ? 'dash' : 'attack'), e.last === 'dash' ? 6 : 6] : e.t < 0.35 && e.last === 'dash' ? [K + 'dash', 7] : idle;
     default: return idle;
   }
 }

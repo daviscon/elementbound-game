@@ -118,6 +118,22 @@ export const MANIFEST = {
   'reed.castrush': ch('reed', 'cast-rush', { file: 'boss-rime-warden', workH: 1152, cut: 60, refFrame: 0 }),
   'reed.uppercut': ch('reed', 'uppercut', { file: 'boss-rime-warden', workH: 1152, cut: 60, refFrame: 0 }),
   'soldier.antiair': ch('soldier', 'antiair'),
+  // v16 (Connor's note 75): the Warden treatment for the other three guardians: a tell sheet per move and a pogo answer,
+  // used the moment each file lands (the dev listing keeps a missing one from 404ing)
+  'overseer.castcone': ch('overseer', 'cast-cone', { file: 'boss-kiln-overseer', workH: 1152, cut: 60, srcH: 620 }),
+  'overseer.castpunch': ch('overseer', 'cast-punch', { file: 'boss-kiln-overseer', workH: 1152, cut: 60, srcH: 620 }),
+  'overseer.castfan': ch('overseer', 'cast-fan', { file: 'boss-kiln-overseer', workH: 1152, cut: 60, srcH: 620 }),
+  'overseer.castvents': ch('overseer', 'cast-vents', { file: 'boss-kiln-overseer', workH: 1152, cut: 60, srcH: 620 }),
+  'overseer.antiair': ch('overseer', 'antiair', { file: 'boss-kiln-overseer', workH: 1152, cut: 60, srcH: 620 }),
+  'colossus.castslam': ch('colossus', 'cast-slam', { file: 'boss-quarry-colossus', workH: 1152, cut: 60, srcH: 620 }),
+  'colossus.casttoss': ch('colossus', 'cast-toss', { file: 'boss-quarry-colossus', workH: 1152, cut: 60, srcH: 620 }),
+  'colossus.castquake': ch('colossus', 'cast-quake', { file: 'boss-quarry-colossus', workH: 1152, cut: 60, srcH: 620 }),
+  'colossus.antiair': ch('colossus', 'antiair', { file: 'boss-quarry-colossus', workH: 1152, cut: 60, srcH: 620 }),
+  'captain2.castcombo': ch('captain', 'cast-combo', { file: 'captain-redesign', workH: 1152, cut: 60, srcH: 620 }),
+  'captain2.castvolley': ch('captain', 'cast-volley', { file: 'captain-redesign', workH: 1152, cut: 60, srcH: 620 }),
+  'captain2.castleap': ch('captain', 'cast-leap', { file: 'captain-redesign', workH: 1152, cut: 60, srcH: 620 }),
+  'captain2.castdash': ch('captain', 'cast-dash', { file: 'captain-redesign', workH: 1152, cut: 60, srcH: 620 }),
+  'captain2.antiair': ch('captain', 'antiair', { file: 'captain-redesign', workH: 1152, cut: 60, srcH: 620 }),
   'shield.shieldup': ch('shield', 'shieldup', { file: 'enemy-shieldbearer', refFrame: 0, cut: 120, erode: 1 }),
   'parasol.spin': ch('soldier', 'spin', { file: 'enemy-parasol-guard', refFrame: 0, cut: 120, erode: 1 }),
   'fx.firepot': { src: F + 'fire-pot.png', kind: 'fx', frames: 8, cut: 150 },   // a dark red/green keying halo round the pot
@@ -146,16 +162,26 @@ export const MANIFEST = {
   'fx.healring': { src: F + 'heal-ring.png', kind: 'fx', frames: 8 },
   'fx.exitchevron': { src: U + 'exit-chevron.png', kind: 'fx', frames: 8 },
   'prop.iceslab': { src: 'assets/props/ice-slab-melt.png', kind: 'fx', frames: 8, nofeather: true },
+  'prop.kit7-kite': { src: 'assets/props/platform-kit-kite-r7.png', kind: 'fx', frames: 6, nofeather: true },   // v16 (note 72)
+  'prop.kit7-drowned': { src: 'assets/props/platform-kit-drowned-r7.png', kind: 'fx', frames: 6, nofeather: true, keyMagenta: true },   // v16 (note 72)
+  'prop.kit7-quarry': { src: 'assets/props/platform-kit-quarry-r7.png', kind: 'fx', frames: 6, nofeather: true },   // v16 (note 72)
+  'prop.kit7-kiln': { src: 'assets/props/platform-kit-kiln-r7.png', kind: 'fx', frames: 6, nofeather: true },   // v16 (note 72)
+  'prop.kit7-brass': { src: 'assets/props/platform-kit-brass-r7.png', kind: 'fx', frames: 6, nofeather: true },   // v16 (note 72)
+  'prop.sideexit-kite': { src: 'assets/props/side-exit-kite.png', kind: 'fx', frames: 2, nofeather: true },   // v16 (note 73)
+  'prop.sideexit-drowned': { src: 'assets/props/side-exit-drowned.png', kind: 'fx', frames: 2, nofeather: true },   // v16 (note 73)
+  'prop.sideexit-quarry': { src: 'assets/props/side-exit-quarry.png', kind: 'fx', frames: 2, nofeather: true },   // v16 (note 73)
+  'prop.sideexit-kiln': { src: 'assets/props/side-exit-kiln.png', kind: 'fx', frames: 2, nofeather: true },   // v16 (note 73)
+  'prop.sideexit-brass': { src: 'assets/props/side-exit-brass.png', kind: 'fx', frames: 2, nofeather: true },   // v16 (note 73)
   'prop.icearch': { src: 'assets/props/ice-sealed-arch.png', kind: 'fx', frames: 8, nofeather: true },
   'prop.hangchain': { src: 'assets/props/hang-chain.png', kind: 'bg' },
   'prop.hangrope': { src: 'assets/props/hang-rope.png', kind: 'bg' },
   'prop.ledgecracks': { src: 'assets/props/ledge-cracks.png', kind: 'fx', frames: 4, nofeather: true },
   'reed.attack': ch('reed', 'attack', { file: 'boss-rime-warden', workH: 1152, cut: 60, refFrame: 0 }),
   'reed.windup': ch('reed', 'windup', { file: 'boss-rime-warden', workH: 1152, cut: 60, refFrame: 0 }),
-  'colossus.walk': ch('colossus', 'walk', { file: 'boss-quarry-colossus', flip: true }),
-  'colossus.attack': ch('colossus', 'attack', { file: 'boss-quarry-colossus', flip: true }),
-  'overseer.walk': ch('overseer', 'walk', { file: 'boss-kiln-overseer', flip: true, erode: 2 }),
-  'overseer.attack': ch('overseer', 'attack', { file: 'boss-kiln-overseer', flip: true, erode: 2 }),
+  'colossus.walk': ch('colossus', 'walk', { file: 'boss-quarry-colossus', srcH: 620 }),   // v16 (note 75): the redraw, facing right, body 620 px of 1152
+  'colossus.attack': ch('colossus', 'attack', { file: 'boss-quarry-colossus', srcH: 620 }),   // v16 (note 75): the redraw, facing right, body 620 px of 1152
+  'overseer.walk': ch('overseer', 'walk', { file: 'boss-kiln-overseer', srcH: 620 }),   // v16 (note 75): the redesign, facing right, body 620 px of 1152
+  'overseer.attack': ch('overseer', 'attack', { file: 'boss-kiln-overseer', srcH: 620 }),   // v16 (note 75): the redesign, facing right, body 620 px of 1152
 
   // Element-move effects and world effects (8x1 sheets, 384 px cells).
   'fx.gust': { src: F + 'gust.png', kind: 'fx', frames: 8 },
@@ -233,24 +259,24 @@ export const MANIFEST = {
   'hero.land': ch('hero', 'land', { pose: 0.85 }),
   'hero.cling': ch('hero', 'wall-cling'),
   // bosses and people
-  'overseer.vent': ch('overseer', 'vent', { file: 'boss-kiln-overseer', flip: true, erode: 2, pose: 0.85 }),
-  'overseer.defeat': ch('overseer', 'defeat', { file: 'boss-kiln-overseer', flip: true, erode: 2, refFrame: 0 }),   // v6: frame 1 is the walk sheet's size
-  'overseer.idle': ch('overseer', 'idle', { file: 'boss-kiln-overseer', flip: true, erode: 2 }),
-  'colossus.idle': ch('colossus', 'idle', { file: 'boss-quarry-colossus', flip: true }),
+  'overseer.vent': ch('overseer', 'vent', { file: 'boss-kiln-overseer', srcH: 620 }),   // v16 (note 75): the redesign, facing right, body 620 px of 1152
+  'overseer.defeat': ch('overseer', 'defeat', { file: 'boss-kiln-overseer', srcH: 620 }),   // v16 (note 75): the redesign, facing right, body 620 px of 1152
+  'overseer.idle': ch('overseer', 'idle', { file: 'boss-kiln-overseer', srcH: 620 }),   // v16 (note 75): the redesign, facing right, body 620 px of 1152
+  'colossus.idle': ch('colossus', 'idle', { file: 'boss-quarry-colossus', srcH: 620 }),   // v16 (note 75): the redraw, facing right, body 620 px of 1152
   'reed.hurt': ch('reed', 'hurt', { file: 'boss-rime-warden', workH: 1152, cut: 60, pose: 0.95 }),
   'reed.rise': ch('reed', 'rise', { file: 'boss-rime-warden', workH: 1152, cut: 60, refFrame: 7, groundLine: true, gaps: true }),   // the rise and defeat sheets carry a thin ground line under the poses: masked at load
   'reed.defeat': ch('reed', 'defeat', { file: 'boss-rime-warden', workH: 1152, cut: 60, refFrame: 0, groundLine: true, gaps: true }),
-  'colossus.stagger': ch('colossus', 'stagger', { file: 'boss-quarry-colossus', flip: true, refFrame: 0 }),   // v6: delivered; frame 1 stands at walk size
-  'colossus.defeat': ch('colossus', 'defeat', { file: 'boss-quarry-colossus', flip: true, refFrame: 0 }),
+  'colossus.stagger': ch('colossus', 'stagger', { file: 'boss-quarry-colossus', srcH: 620 }),   // v16 (note 75): the redraw, facing right, body 620 px of 1152
+  'colossus.defeat': ch('colossus', 'defeat', { file: 'boss-quarry-colossus', srcH: 620 }),   // v16 (note 75): the redraw, facing right, body 620 px of 1152
   'captain.walk': ch('captain', 'walk', { flip: true }),
   // The Captain's original redesign (brass scales, indigo coat, lantern pole). When these
   // sheets are present they replace the old look everywhere, portrait included.
-  'captain2.idle': ch('captain', 'idle', { file: 'captain-redesign', flip: true }),
-  'captain2.walk': ch('captain', 'walk', { file: 'captain-redesign', flip: true }),
-  'captain2.attack': ch('captain', 'attack', { file: 'captain-redesign', flip: true, pose: 0.92 }),   // v7: helmet at the idle's height
-  'captain2.dash': ch('captain', 'dash', { file: 'captain-redesign', flip: true, pose: 0.92 }),
-  'captain2.defeat': ch('captain', 'defeat', { file: 'captain-redesign', flip: true, pose: 0.8 }),
-  'captain2.hurt': ch('captain', 'hurt', { file: 'captain-redesign', flip: true }),   // v7: the delivered sheet stands upright like the idle
+  'captain2.idle': ch('captain', 'idle', { file: 'captain-redesign', srcH: 620 }),   // v16 (note 75): the glaive redraw, facing right, body 620 px of 1152
+  'captain2.walk': ch('captain', 'walk', { file: 'captain-redesign', srcH: 620 }),   // v16 (note 75): the glaive redraw, facing right, body 620 px of 1152
+  'captain2.attack': ch('captain', 'attack', { file: 'captain-redesign', srcH: 620 }),   // v16 (note 75): the glaive redraw, facing right, body 620 px of 1152
+  'captain2.dash': ch('captain', 'dash', { file: 'captain-redesign', srcH: 620 }),   // v16 (note 75): the glaive redraw, facing right, body 620 px of 1152
+  'captain2.defeat': ch('captain', 'defeat', { file: 'captain-redesign', srcH: 620 }),   // v16 (note 75): the glaive redraw, facing right, body 620 px of 1152
+  'captain2.hurt': ch('captain', 'hurt', { file: 'captain-redesign', srcH: 620 }),   // v16 (note 75): the glaive redraw, facing right, body 620 px of 1152
   'portrait.captain2': { src: C + 'captain-redesign-portrait.png', kind: 'bg' },
   'captain.defeat': ch('captain', 'defeat', { flip: true, pose: 0.8 }),
   'kesh.idle': ch('kesh', 'idle', { file: 'npc-kesh' }),   // v6: the redesigned kiln-worker Kesh
@@ -318,10 +344,6 @@ export const MANIFEST = {
   'prop.waterbank': { src: 'assets/props/prop-water-bank.png', kind: 'bg' },
   'tile.stairwell': { src: RM + 'room-tile-stairwell.png', kind: 'bg' },
   // v10: Connor's round-2 notes (11 to 21). Each is drawn in code until its file arrives.
-  'fx.attune-air': { src: F + 'fx-attune-air.png', kind: 'fx', frames: 8 },
-  'fx.attune-water': { src: F + 'fx-attune-water.png', kind: 'fx', frames: 8 },
-  'fx.attune-earth': { src: F + 'fx-attune-earth.png', kind: 'fx', frames: 8 },
-  'fx.attune-fire': { src: F + 'fx-attune-fire.png', kind: 'fx', frames: 8 },
   'ui.powercard': { src: U + 'ui-power-card.png', kind: 'bg' },
   'fx.burningground': { src: F + 'fx-burning-ground.png', kind: 'fx', frames: 8 },
   // v10 (note 14): the four new foes, and the soldier's hurt and defeat on one sheet (frames 1-4 hurt, 5-8 defeat)
@@ -695,11 +717,13 @@ function processSheet(img, entry) {
   // and played over the boss at each phase change. margin clears a band round each cell; cut (below) drops the haze.
   // v14 (round 6): the frost-crack tell is painted on its own grey stone slab; keep only the cyan cracks, glow and motes
   // (blue clearly above red), so it lies over the real floor with no second slab
+  // v16 (planner): the drowned r7 kit carries a faint magenta keying fringe on its slab edges: drop magenta-hued pixels
+  if (entry.keyMagenta) { for (let i = 0; i < px.length; i += 4) { const r = px[i], g = px[i + 1], b = px[i + 2]; if (px[i + 3] && r > 110 && b > 90 && g < Math.min(r, b) * 0.72) px[i + 3] = 0; } }
   if (entry.keepCyan) { for (let i = 0; i < px.length; i += 4) { const r = px[i], g = px[i + 1], b = px[i + 2]; if (!(b - r > 45 && b > 120)) px[i + 3] = 0; } }
   if (entry.margin) { const W0 = canvas.width, m = Math.round(Math.min(fw, fh) * entry.margin); for (let y = 0; y < fh; y++) for (let x = 0; x < W0; x++) { const cx = x % fw; if (cx < m || cx >= fw - m || y < m || y >= fh - m) px[(y * W0 + x) * 4 + 3] = 0; } }
   if (entry.kind === 'fx' && !entry.nofeather) { featherCells(px, canvas.width, fw, fh, n); feathered = true; }
   const frames = [];
-  let dirty = false;
+  let dirty = !!entry.keyMagenta;   // v16: the magenta key is written back too
   // v11 (review 11 #3, #8): drop the soft halo before measuring, so it neither shows nor sizes the frame
   if (entry.cut) { for (let i = 3; i < px.length; i += 4) if (px[i] < entry.cut) px[i] = 0; dirty = true; }
   for (let f = 0; f < n; f++) {
@@ -876,6 +900,9 @@ export const Assets = {
   scaleOf(key) {
     const it = this.items[key], e = MANIFEST[key];
     if (e.h) return e.h / it.maxH;
+    // v16 (note 75): srcH = the standing figure's height in the 1152 px source cell, for tell sheets whose first frame is a
+    // crouch or a leap (every cast sheet of one guardian is drawn at one scale, not each by its own first frame)
+    if (e.srcH) return TARGET[e.who] * (e.pose || 1) / (e.srcH * it.fh / 1152);
     // v6: refFrame = size the sheet by one upright frame (a collapse whose first frame must match the walk sheet)
     if (e.refFrame != null && it.frames[e.refFrame]) { const b = it.frames[e.refFrame]; return TARGET[e.who] * (e.pose || 1) / (b.y1 - b.y0 + 1); }
     return (TARGET[e.who] * (e.pose || 1)) / it.refH;
