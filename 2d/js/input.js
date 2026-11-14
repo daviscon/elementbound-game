@@ -18,7 +18,7 @@ const KEYMAP = {
 // Standard gamepad: 0 ✕, 1 ○, 2 □, 3 △, 4 L1, 5 R1, 6 L2, 7 R2, 9 Options, 12-15 D-pad.
 const PADMAP = {
   0: ['jump', 'confirm'], 1: ['dash', 'back'], 2: ['attack'], 3: ['interact'],
-  4: ['m0'], 6: ['m1'], 5: ['m2'], 7: ['m3'], 9: ['pause'], 8: ['map'],
+  4: ['m0'], 6: ['m1'], 5: ['m2'], 7: ['m3'], 9: ['pause'], 8: ['map'], 17: ['map'],
   12: ['up'], 13: ['down'], 14: ['left'], 15: ['right'], 10: ['tab'],   // v10 (note 20): R3 no longer heals; hold △
 };
 const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'dash', 'attack', 'interact', 'm0', 'm1', 'm2', 'm3', 'pause', 'confirm', 'back', 'map', 'heal', 'tab', 'pin'];
@@ -159,7 +159,7 @@ export const Input = {
 
 // v15: touch labels are the names painted on the on-screen buttons (draw.js shows them as round touch glyphs).
 const LABELS = {
-  pad: { jump: '✕', dash: '○', attack: '□', interact: '△', m0: 'L1', m1: 'L2', m2: 'R1', m3: 'R2', pause: 'OPTIONS', confirm: '✕', back: '○', move: 'Stick', down: '↓', up: '↑', map: 'SHARE', heal: '△', tab: 'L3', pin: '□', left: '←', right: '→' },
+  pad: { jump: '✕', dash: '○', attack: '□', interact: '△', m0: 'L1', m1: 'L2', m2: 'R1', m3: 'R2', pause: 'OPTIONS', confirm: '✕', back: '○', move: 'Stick', down: '↓', up: '↑', map: 'TOUCHPAD', heal: '△', tab: 'L3', pin: '□', left: '←', right: '→' },
   kb: { jump: 'Space', dash: 'X', attack: 'Z', interact: 'E', m0: 'A', m1: 'S', m2: 'D', m3: 'F', pause: 'Esc', confirm: 'Z', back: 'X', move: '← →', down: '↓', up: '↑', map: 'Tab', heal: 'Q', tab: 'I', pin: 'P', left: '←', right: '→' },
   touch: { jump: 'Jump', dash: 'Dash', attack: 'Strike', interact: 'Use', m0: 'Bend 1', m1: 'Bend 2', m2: 'Bend 3', m3: 'Bend 4', pause: 'Pause', confirm: 'Tap', back: 'Back', move: 'Stick', down: 'Stick ↓', up: 'Stick ↑', map: 'Map', heal: 'Heal', tab: 'Bag', pin: 'Pin', left: '◀', right: '▶' },
 };
